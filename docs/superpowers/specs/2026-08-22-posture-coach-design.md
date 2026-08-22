@@ -108,6 +108,23 @@ failure modes:
 | 7 | Main window dashboard (Recharts) | Review with real data |
 | 8 | Polish — tray, autostart, coaching refinement | Final review |
 
+## 5b. Design language (white minimal, Nothing-inspired)
+
+The UI follows a white, minimal, Nothing-inspired look (à la Nothing OS).
+Applies to the popup card and the dashboard.
+
+- **Canvas:** pure/near-white (#FFFFFF / #FAFAFA), generous negative space.
+- **Ink:** near-black (#0A0A0A), secondary gray (#8A8A8A), 1px hairlines.
+- **Accent:** Nothing's signature red, used sparingly — alert/bad state,
+  failing checks, live dot. Everything else monochrome.
+- **Type:** technical/industrial — uppercase micro-labels with wide letter-
+  spacing, tabular monospace numerals for the score, dot-matrix feel where fit.
+- **Motifs:** subtle dot-grid textures, precise grid alignment, thin strokes.
+- **Motion (high priority):** spring-based transitions via `motion` (Framer
+  Motion) — popup springs in/out, checklist check/cross micro-interactions,
+  score count-up, pulsing live dot. Not hand-rolled CSS keyframes. Apply
+  emil-design-eng + frontend-design skills at the UI stages.
+
 ## 6. Non-goals for v1
 
 - No gamification/XP/leaderboard (needs backend + auth, separate scope).

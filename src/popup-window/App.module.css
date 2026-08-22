@@ -4,8 +4,9 @@
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  border-radius: 12px;
-  background: #0f172a;
-  color: #e2e8f0;
-  font-family: system-ui, -apple-system, sans-serif;
+  border-radius: 16px;
+  border: 1px solid #ebebeb;
+  background: #ffffff;
+  color: #0a0a0a;
+  font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
 }
