@@ -1,11 +1,16 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, type ReactNode, type RefObject } from "react";
 import styles from "./WebcamFeed.module.css";
 
 type CameraStatus = "requesting" | "granted" | "denied";
 
-// Requests webcam access and renders the raw video feed. No MediaPipe yet (Stage 1).
-export default function WebcamFeed() {
-  const videoRef = useRef<HTMLVideoElement>(null);
+interface WebcamFeedProps {
+  videoRef: RefObject<HTMLVideoElement>;
+  children?: ReactNode;
+}
+
+// Requests webcam access and renders the live video feed. The parent owns the
+// video ref so overlays (e.g. LandmarkOverlay) can read the same frames.
+export default function WebcamFeed({ videoRef, children }: WebcamFeedProps) {
   const [status, setStatus] = useState<CameraStatus>("requesting");
   const [aspectRatio, setAspectRatio] = useState<number | null>(null);
 
@@ -33,7 +38,7 @@ export default function WebcamFeed() {
     return () => {
       activeStream?.getTracks().forEach((track) => track.stop());
     };
-  }, []);
+  }, [videoRef]);
 
   // Match the frame to the camera's real aspect ratio so there are no letterbox bars.
   function handleLoadedMetadata() {
@@ -65,6 +70,7 @@ export default function WebcamFeed() {
         onLoadedMetadata={handleLoadedMetadata}
         aria-label="Live webcam feed"
       />
+      {children}
     </div>
   );
 }

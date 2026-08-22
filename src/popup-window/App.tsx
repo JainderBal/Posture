@@ -1,13 +1,17 @@
+import { useRef } from "react";
 import { motion } from "motion/react";
 import PopupHeader from "./PopupHeader";
 import WebcamFeed from "./WebcamFeed";
+import LandmarkOverlay from "./LandmarkOverlay";
 import styles from "./App.module.css";
 
 // Posture checks shown in the card. Stage 4 replaces these placeholders with live results.
 const POSTURE_CHECKS = ["Head", "Shoulders", "Screen distance"] as const;
 
-// Popup card window. Stage 1: header, viewfinder, and a pending score/checklist preview.
+// Popup card window. Stage 2: header, viewfinder with live landmark dots, pending panel.
 export default function App() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
   return (
     <motion.div
       className={styles.card}
@@ -18,7 +22,9 @@ export default function App() {
       <PopupHeader />
 
       <div className={styles.viewfinder}>
-        <WebcamFeed />
+        <WebcamFeed videoRef={videoRef}>
+          <LandmarkOverlay videoRef={videoRef} />
+        </WebcamFeed>
       </div>
 
       <div className={styles.panel}>
