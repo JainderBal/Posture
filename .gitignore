@@ -13,6 +13,9 @@ src-tauri/target/
 public/models/
 public/wasm/
 
+# Intermediate icon source (generated icons in src-tauri/icons are committed)
+src-tauri/icon-source.png
+
 # Local SQLite data
 *.sqlite
 *.sqlite-journal
