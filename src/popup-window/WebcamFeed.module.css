@@ -1,9 +1,16 @@
+.frame {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000000;
+}
+
 .video {
+  display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover; /* frame matches the camera aspect, so this fills with no crop */
   transform: scaleX(-1); /* mirror so it reads like a mirror to the user */
-  background: #000;
 }
 
 .message {

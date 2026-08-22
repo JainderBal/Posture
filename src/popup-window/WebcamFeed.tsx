@@ -7,13 +7,17 @@ type CameraStatus = "requesting" | "granted" | "denied";
 export default function WebcamFeed() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [status, setStatus] = useState<CameraStatus>("requesting");
+  const [aspectRatio, setAspectRatio] = useState<number | null>(null);
 
   useEffect(() => {
     let activeStream: MediaStream | null = null;
 
     async function startCamera() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false,
+        });
         activeStream = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -31,6 +35,14 @@ export default function WebcamFeed() {
     };
   }, []);
 
+  // Match the frame to the camera's real aspect ratio so there are no letterbox bars.
+  function handleLoadedMetadata() {
+    const video = videoRef.current;
+    if (video && video.videoHeight > 0) {
+      setAspectRatio(video.videoWidth / video.videoHeight);
+    }
+  }
+
   if (status === "denied") {
     return (
       <div className={styles.message}>
@@ -40,13 +52,19 @@ export default function WebcamFeed() {
   }
 
   return (
-    <video
-      ref={videoRef}
-      className={styles.video}
-      autoPlay
-      playsInline
-      muted
-      aria-label="Live webcam feed"
-    />
+    <div
+      className={styles.frame}
+      style={aspectRatio ? { aspectRatio: `${aspectRatio}` } : undefined}
+    >
+      <video
+        ref={videoRef}
+        className={styles.video}
+        autoPlay
+        playsInline
+        muted
+        onLoadedMetadata={handleLoadedMetadata}
+        aria-label="Live webcam feed"
+      />
+    </div>
   );
 }
