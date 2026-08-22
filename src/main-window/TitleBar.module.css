@@ -1,0 +1,51 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding-left: 0.875rem;
+  border-bottom: 1px solid #ebebeb;
+  user-select: none;
+  background: #ffffff;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #0a0a0a;
+}
+
+.wordmark {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.controls {
+  display: flex;
+  height: 100%;
+}
+
+.control {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: #0a0a0a;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.control:hover {
+  background: #f2f2f2;
+}
+
+.close:hover {
+  background: #d71921;
+  color: #ffffff;
+}
