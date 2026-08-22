@@ -19,7 +19,7 @@ export interface PostureLandmarks {
 // The user's captured "good posture" reference, produced by calibrate().
 export interface Baseline {
   eyeAngleDegrees: number; // head-tilt reference (angle of the eye line)
-  shoulderAngleDegrees: number; // shoulder-tilt reference (angle of the shoulder line)
+  shoulderGap: number; // shoulder-height reference (shoulder-to-nose gap / eye distance)
   eyeDistance: number; // screen-distance reference (distance between the eyes)
 }
 

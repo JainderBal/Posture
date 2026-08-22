@@ -9,7 +9,7 @@ import type {
 } from "../types/posture";
 import {
   HEAD_TILT_TOLERANCE_DEGREES,
-  SHOULDER_TILT_TOLERANCE_DEGREES,
+  SHOULDER_HUNCH_MIN_RATIO,
   DISTANCE_TOO_CLOSE_RATIO,
   SCORE_WEIGHT_HEAD,
   SCORE_WEIGHT_SHOULDERS,
@@ -21,9 +21,41 @@ export function pointDistance(a: Point, b: Point): number {
   return Math.hypot(b.x - a.x, b.y - a.y);
 }
 
+// Linear interpolation between two points by factor t (0 = a, 1 = b).
+function lerpPoint(a: Point, b: Point, t: number): Point {
+  return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+}
+
+// Exponential moving average of landmark positions to damp per-frame jitter.
+// Shoulders (from the noisier Pose model) get their own, usually heavier, factor.
+export function smoothLandmarks(
+  previous: PostureLandmarks,
+  current: PostureLandmarks,
+  alpha: number,
+  shoulderAlpha: number = alpha
+): PostureLandmarks {
+  return {
+    leftEye: lerpPoint(previous.leftEye, current.leftEye, alpha),
+    rightEye: lerpPoint(previous.rightEye, current.rightEye, alpha),
+    leftEar: lerpPoint(previous.leftEar, current.leftEar, alpha),
+    rightEar: lerpPoint(previous.rightEar, current.rightEar, alpha),
+    nose: lerpPoint(previous.nose, current.nose, alpha),
+    leftShoulder: lerpPoint(previous.leftShoulder, current.leftShoulder, shoulderAlpha),
+    rightShoulder: lerpPoint(previous.rightShoulder, current.rightShoulder, shoulderAlpha),
+  };
+}
+
 // Angle (degrees) of the line from a to b, measured from the horizontal.
 export function lineAngleDegrees(a: Point, b: Point): number {
   return (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+}
+
+// Vertical gap between the shoulders and the nose, normalized by eye distance
+// (so it's independent of how close the user is). Shrinks when shoulders hunch up.
+export function shoulderGap(landmarks: PostureLandmarks): number {
+  const shoulderMidY = (landmarks.leftShoulder.y + landmarks.rightShoulder.y) / 2;
+  const eyeDistance = pointDistance(landmarks.leftEye, landmarks.rightEye);
+  return (shoulderMidY - landmarks.nose.y) / eyeDistance;
 }
 
 // Averages a list of numbers (returns 0 for an empty list).
@@ -35,12 +67,12 @@ function average(values: number[]): number {
 // Averages posture samples into a Baseline capturing the user's good posture.
 export function calibrate(samples: PostureLandmarks[]): Baseline {
   const eyeAngles = samples.map((s) => lineAngleDegrees(s.leftEye, s.rightEye));
-  const shoulderAngles = samples.map((s) => lineAngleDegrees(s.leftShoulder, s.rightShoulder));
+  const shoulderGaps = samples.map((s) => shoulderGap(s));
   const eyeDistances = samples.map((s) => pointDistance(s.leftEye, s.rightEye));
 
   return {
     eyeAngleDegrees: average(eyeAngles),
-    shoulderAngleDegrees: average(shoulderAngles),
+    shoulderGap: average(shoulderGaps),
     eyeDistance: average(eyeDistances),
   };
 }
@@ -52,11 +84,10 @@ export function checkHead(landmarks: PostureLandmarks, baseline: Baseline): Chec
   return { pass: delta <= HEAD_TILT_TOLERANCE_DEGREES, delta };
 }
 
-// Checks shoulder tilt: how far the shoulder-line angle has drifted from baseline.
+// Checks shoulder hunch: the shoulder-to-head gap shrinks as shoulders rise up.
 export function checkShoulders(landmarks: PostureLandmarks, baseline: Baseline): CheckResult {
-  const angle = lineAngleDegrees(landmarks.leftShoulder, landmarks.rightShoulder);
-  const delta = Math.abs(angle - baseline.shoulderAngleDegrees);
-  return { pass: delta <= SHOULDER_TILT_TOLERANCE_DEGREES, delta };
+  const ratio = shoulderGap(landmarks) / baseline.shoulderGap;
+  return { pass: ratio >= SHOULDER_HUNCH_MIN_RATIO, delta: ratio };
 }
 
 // Checks screen distance: the eyes appear farther apart as the face nears the screen.

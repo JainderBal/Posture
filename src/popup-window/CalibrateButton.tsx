@@ -21,16 +21,18 @@ export default function CalibrateButton({
 }: CalibrateButtonProps) {
   const [isCalibrating, setIsCalibrating] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [justDone, setJustDone] = useState(false);
   const timers = useRef<number[]>([]);
 
   // Clear any pending timers if the component unmounts mid-calibration.
   useEffect(() => {
-    return () => timers.current.forEach((id) => window.clearInterval(id));
+    return () => timers.current.forEach((id) => window.clearTimeout(id));
   }, []);
 
   function runCalibration() {
     if (isCalibrating) return;
     setIsCalibrating(true);
+    setJustDone(false);
     setProgress(0);
     const samples: PostureLandmarks[] = [];
     const startedAt = performance.now();
@@ -52,18 +54,23 @@ export default function CalibrateButton({
       const baseline = calibrate(samples);
       console.log("[calibrate] baseline", baseline);
       onCalibrated(baseline);
+      setJustDone(true);
+      const resetId = window.setTimeout(() => setJustDone(false), 1600);
+      timers.current = [resetId];
     }, CALIBRATION_DURATION_MS);
 
     timers.current = [samplerId, stopId];
   }
 
   // Pulse the button while it is the primary action (uncalibrated, not running).
-  const shouldPulse = !isCalibrated && !isCalibrating;
+  const shouldPulse = !isCalibrated && !isCalibrating && !justDone;
   const label = isCalibrating
     ? `Hold still… ${Math.round(progress * 100)}%`
-    : isCalibrated
-      ? "Recalibrate"
-      : "Calibrate";
+    : justDone
+      ? "Recalibrated ✓"
+      : isCalibrated
+        ? "Recalibrate"
+        : "Calibrate";
 
   return (
     <motion.button

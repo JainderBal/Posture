@@ -8,10 +8,12 @@ import {
   type Landmarkers,
   type FrameLandmarks,
 } from "../lib/mediapipe";
-import { assessPosture } from "../lib/posture";
+import { assessPosture, smoothLandmarks } from "../lib/posture";
 import type { PostureLandmarks, Baseline, PostureAssessment } from "../types/posture";
 import {
   DETECT_INTERVAL_MS,
+  LANDMARK_SMOOTHING_ALPHA,
+  SHOULDER_SMOOTHING_ALPHA,
   POSE_DOT_RADIUS,
   FACE_DOT_RADIUS,
   CONNECTOR_WIDTH,
@@ -134,6 +136,7 @@ export default function LandmarkOverlay({
     let animationId = 0;
     let lastDetectAt = 0;
     let latestFrame: FrameLandmarks | null = null;
+    let smoothed: PostureLandmarks | null = null;
     let cancelled = false;
 
     function renderLoop() {
@@ -148,10 +151,14 @@ export default function LandmarkOverlay({
       if (now - lastDetectAt >= DETECT_INTERVAL_MS) {
         lastDetectAt = now;
         latestFrame = detectFrame(landmarkers, video, now);
-        const landmarks = extractPostureLandmarks(latestFrame);
-        landmarksRef.current = landmarks;
+        const raw = extractPostureLandmarks(latestFrame);
+        smoothed =
+          raw && smoothed
+            ? smoothLandmarks(smoothed, raw, LANDMARK_SMOOTHING_ALPHA, SHOULDER_SMOOTHING_ALPHA)
+            : raw;
+        landmarksRef.current = smoothed;
         const baseline = baselineRef.current;
-        assessmentRef.current = landmarks && baseline ? assessPosture(landmarks, baseline) : null;
+        assessmentRef.current = smoothed && baseline ? assessPosture(smoothed, baseline) : null;
       }
 
       const assessment = assessmentRef.current;

@@ -7,6 +7,7 @@ import {
   checkShoulders,
   checkDistance,
   computeScore,
+  smoothLandmarks,
 } from "./posture";
 import type { PostureLandmarks, Point, CheckResult } from "../types/posture";
 
@@ -27,6 +28,20 @@ function makeSample(eyeDistance: number, angleDegrees: number): PostureLandmarks
     nose: { x: eyeDistance / 2, y: eyeDistance / 2 },
     leftShoulder: origin,
     rightShoulder: rightEye,
+  };
+}
+
+// Builds a sample with explicit head + shoulder heights for shoulder-gap tests.
+// shoulderGap = (shoulderY - noseY) / eyeDistance; smaller = shoulders hunched up.
+function poseWith(eyeDistance: number, noseY: number, shoulderY: number): PostureLandmarks {
+  return {
+    leftEye: { x: 0, y: 0 },
+    rightEye: { x: eyeDistance, y: 0 },
+    leftEar: { x: 0, y: 0 },
+    rightEar: { x: eyeDistance, y: 0 },
+    nose: { x: eyeDistance / 2, y: noseY },
+    leftShoulder: { x: 0, y: shoulderY },
+    rightShoulder: { x: eyeDistance, y: shoulderY },
   };
 }
 
@@ -52,10 +67,9 @@ describe("calibrate", () => {
     expect(baseline.eyeDistance).toBeCloseTo(15);
   });
 
-  test("captures a level pose as ~0 degrees for eyes and shoulders", () => {
+  test("captures a level eye line as ~0 degrees", () => {
     const baseline = calibrate([makeSample(10, 0), makeSample(10, 0)]);
     expect(baseline.eyeAngleDegrees).toBeCloseTo(0);
-    expect(baseline.shoulderAngleDegrees).toBeCloseTo(0);
   });
 
   test("averages the eye-line angle across samples", () => {
@@ -77,14 +91,14 @@ describe("checkHead", () => {
 });
 
 describe("checkShoulders", () => {
-  const baseline = calibrate([makeSample(10, 0)]);
+  const baseline = calibrate([poseWith(10, 20, 100)]); // shoulderGap = 8
 
-  test("passes when shoulder tilt is within tolerance", () => {
-    expect(checkShoulders(makeSample(10, 4), baseline).pass).toBe(true);
+  test("passes when shoulders stay near their calibrated height", () => {
+    expect(checkShoulders(poseWith(10, 20, 96), baseline).pass).toBe(true); // gap 7.6, ratio 0.95
   });
 
-  test("fails when shoulder tilt exceeds tolerance", () => {
-    expect(checkShoulders(makeSample(10, 12), baseline).pass).toBe(false);
+  test("fails when the shoulders are hunched up toward the head", () => {
+    expect(checkShoulders(poseWith(10, 20, 78), baseline).pass).toBe(false); // gap 5.8, ratio 0.725
   });
 });
 
@@ -114,5 +128,24 @@ describe("computeScore", () => {
 
   test("drops by the head weight when only the head check fails", () => {
     expect(computeScore(fail, pass, pass)).toBe(60);
+  });
+});
+
+describe("smoothLandmarks", () => {
+  test("with alpha 1 returns the current sample unchanged", () => {
+    const current = makeSample(20, 30);
+    expect(smoothLandmarks(makeSample(10, 0), current, 1)).toEqual(current);
+  });
+
+  test("with alpha 0.5 blends halfway between previous and current", () => {
+    const smoothed = smoothLandmarks(makeSample(10, 0), makeSample(20, 0), 0.5);
+    expect(smoothed.rightEye.x).toBeCloseTo(15);
+  });
+
+  test("applies a separate, heavier smoothing factor to the shoulders", () => {
+    // Face snaps fully to current; shoulders are frozen at previous.
+    const smoothed = smoothLandmarks(makeSample(10, 0), makeSample(20, 0), 1, 0);
+    expect(smoothed.rightEye.x).toBeCloseTo(20);
+    expect(smoothed.rightShoulder.x).toBeCloseTo(10);
   });
 });
