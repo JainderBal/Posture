@@ -5,7 +5,7 @@ use tauri::{App, PhysicalPosition, WebviewUrl, WebviewWindowBuilder};
 
 // Popup card dimensions and screen-edge margin (logical pixels).
 const POPUP_WIDTH: f64 = 320.0;
-const POPUP_HEIGHT: f64 = 400.0;
+const POPUP_HEIGHT: f64 = 480.0;
 const SCREEN_EDGE_MARGIN: f64 = 20.0;
 
 const POPUP_LABEL: &str = "popup";

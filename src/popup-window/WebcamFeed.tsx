@@ -13,11 +13,13 @@ interface WebcamFeedProps {
 export default function WebcamFeed({ videoRef, children }: WebcamFeedProps) {
   const [status, setStatus] = useState<CameraStatus>("requesting");
   const [aspectRatio, setAspectRatio] = useState<number | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let activeStream: MediaStream | null = null;
 
     async function startCamera() {
+      setStatus("requesting");
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -38,7 +40,7 @@ export default function WebcamFeed({ videoRef, children }: WebcamFeedProps) {
     return () => {
       activeStream?.getTracks().forEach((track) => track.stop());
     };
-  }, [videoRef]);
+  }, [videoRef, attempt]);
 
   // Match the frame to the camera's real aspect ratio so there are no letterbox bars.
   function handleLoadedMetadata() {
@@ -51,7 +53,10 @@ export default function WebcamFeed({ videoRef, children }: WebcamFeedProps) {
   if (status === "denied") {
     return (
       <div className={styles.message}>
-        Camera access is blocked. Please grant webcam permission and reopen.
+        <span>Camera unavailable</span>
+        <button type="button" className={styles.retry} onClick={() => setAttempt((a) => a + 1)}>
+          Retry
+        </button>
       </div>
     );
   }
@@ -70,6 +75,7 @@ export default function WebcamFeed({ videoRef, children }: WebcamFeedProps) {
         onLoadedMetadata={handleLoadedMetadata}
         aria-label="Live webcam feed"
       />
+      {status === "requesting" && <div className={styles.starting}>Starting camera…</div>}
       {children}
     </div>
   );

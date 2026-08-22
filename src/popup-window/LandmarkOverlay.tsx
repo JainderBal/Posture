@@ -1,27 +1,46 @@
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, type MutableRefObject, type RefObject } from "react";
 import type { NormalizedLandmark } from "@mediapipe/tasks-vision";
 import {
   initLandmarkers,
   detectFrame,
   closeLandmarkers,
+  extractPostureLandmarks,
   type Landmarkers,
   type FrameLandmarks,
 } from "../lib/mediapipe";
+import type { PostureLandmarks } from "../types/posture";
 import {
   DETECT_INTERVAL_MS,
   POSE_DOT_RADIUS,
   FACE_DOT_RADIUS,
-  POSE_DOT_COLOR,
-  FACE_DOT_COLOR,
-  CONNECTOR_COLOR,
   CONNECTOR_WIDTH,
+  OVERLAY_DOT_UNCALIBRATED,
+  OVERLAY_CONNECTOR_UNCALIBRATED,
+  OVERLAY_DOT_GOOD,
+  OVERLAY_CONNECTOR_GOOD,
   POSTURE_POSE_INDICES,
   POSTURE_FACE_INDICES,
 } from "../lib/constants";
 import styles from "./LandmarkOverlay.module.css";
 
+interface OverlayColors {
+  dot: string;
+  connector: string;
+}
+
+const UNCALIBRATED_COLORS: OverlayColors = {
+  dot: OVERLAY_DOT_UNCALIBRATED,
+  connector: OVERLAY_CONNECTOR_UNCALIBRATED,
+};
+const GOOD_COLORS: OverlayColors = {
+  dot: OVERLAY_DOT_GOOD,
+  connector: OVERLAY_CONNECTOR_GOOD,
+};
+
 interface LandmarkOverlayProps {
   videoRef: RefObject<HTMLVideoElement>;
+  landmarksRef: MutableRefObject<PostureLandmarks | null>;
+  calibrated: boolean;
 }
 
 // Draws a set of normalized landmarks as filled dots on the canvas context.
@@ -51,11 +70,12 @@ function drawConnector(
   ctx: CanvasRenderingContext2D,
   landmarks: NormalizedLandmark[],
   width: number,
-  height: number
+  height: number,
+  color: string
 ) {
   if (landmarks.length < 2) return;
   const ordered = [...landmarks].sort((a, b) => a.x - b.x);
-  ctx.strokeStyle = CONNECTOR_COLOR;
+  ctx.strokeStyle = color;
   ctx.lineWidth = CONNECTOR_WIDTH;
   ctx.lineJoin = "round";
   ctx.beginPath();
@@ -72,7 +92,8 @@ function drawConnector(
 function drawFrame(
   canvas: HTMLCanvasElement,
   video: HTMLVideoElement,
-  frame: FrameLandmarks | null
+  frame: FrameLandmarks | null,
+  colors: OverlayColors
 ) {
   const width = video.clientWidth;
   const height = video.clientHeight;
@@ -87,21 +108,27 @@ function drawFrame(
   const [faceLandmarks] = frame.face.faceLandmarks;
   if (faceLandmarks) {
     const facePoints = selectLandmarks(faceLandmarks, POSTURE_FACE_INDICES);
-    drawConnector(ctx, facePoints, width, height);
-    drawDots(ctx, facePoints, width, height, FACE_DOT_RADIUS, FACE_DOT_COLOR);
+    drawConnector(ctx, facePoints, width, height, colors.connector);
+    drawDots(ctx, facePoints, width, height, FACE_DOT_RADIUS, colors.dot);
   }
 
   const [poseLandmarks] = frame.pose.landmarks;
   if (poseLandmarks) {
     const shoulderPoints = selectLandmarks(poseLandmarks, POSTURE_POSE_INDICES);
-    drawConnector(ctx, shoulderPoints, width, height);
-    drawDots(ctx, shoulderPoints, width, height, POSE_DOT_RADIUS, POSE_DOT_COLOR);
+    drawConnector(ctx, shoulderPoints, width, height, colors.connector);
+    drawDots(ctx, shoulderPoints, width, height, POSE_DOT_RADIUS, colors.dot);
   }
 }
 
 // Overlays a canvas on the webcam feed and renders live MediaPipe landmark dots.
-export default function LandmarkOverlay({ videoRef }: LandmarkOverlayProps) {
+export default function LandmarkOverlay({ videoRef, landmarksRef, calibrated }: LandmarkOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const colorsRef = useRef<OverlayColors>(UNCALIBRATED_COLORS);
+
+  // Flip dot/line colors green once a baseline exists.
+  useEffect(() => {
+    colorsRef.current = calibrated ? GOOD_COLORS : UNCALIBRATED_COLORS;
+  }, [calibrated]);
 
   useEffect(() => {
     let landmarkers: Landmarkers | null = null;
@@ -121,8 +148,9 @@ export default function LandmarkOverlay({ videoRef }: LandmarkOverlayProps) {
       if (now - lastDetectAt >= DETECT_INTERVAL_MS) {
         lastDetectAt = now;
         latestFrame = detectFrame(landmarkers, video, now);
+        landmarksRef.current = extractPostureLandmarks(latestFrame);
       }
-      drawFrame(canvas, video, latestFrame);
+      drawFrame(canvas, video, latestFrame, colorsRef.current);
     }
 
     async function start() {
@@ -141,7 +169,7 @@ export default function LandmarkOverlay({ videoRef }: LandmarkOverlayProps) {
       cancelAnimationFrame(animationId);
       if (landmarkers) closeLandmarkers(landmarkers);
     };
-  }, [videoRef]);
+  }, [videoRef, landmarksRef]);
 
   return <canvas ref={canvasRef} className={styles.overlay} />;
 }
