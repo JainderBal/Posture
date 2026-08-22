@@ -3,9 +3,22 @@
 // Throttle landmark detection to keep CPU reasonable (~20 detections/sec).
 export const DETECT_INTERVAL_MS = 50;
 
+// How often the popup UI refreshes the score/checklist from the latest assessment.
+export const ASSESSMENT_POLL_MS = 150;
+
 // Calibration captures posture samples over a short window, then averages them.
 export const CALIBRATION_DURATION_MS = 1500;
 export const CALIBRATION_SAMPLE_INTERVAL_MS = 100;
+
+// Posture check tolerances (how far from baseline still counts as "good").
+export const HEAD_TILT_TOLERANCE_DEGREES = 7;
+export const SHOULDER_TILT_TOLERANCE_DEGREES = 6;
+export const DISTANCE_TOO_CLOSE_RATIO = 1.15; // eyes >15% farther apart than baseline = too close
+
+// Score weights per check (sum to 1). Head weighted highest.
+export const SCORE_WEIGHT_HEAD = 0.4;
+export const SCORE_WEIGHT_SHOULDERS = 0.35;
+export const SCORE_WEIGHT_DISTANCE = 0.25;
 
 // Landmark dot + connector rendering on the overlay canvas.
 export const POSE_DOT_RADIUS = 3.5;

@@ -1,0 +1,41 @@
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #ebebeb;
+}
+
+.label {
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #8a8a8a;
+}
+
+.value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #0a0a0a;
+  transition: color 0.3s ease;
+}
+
+.unit {
+  font-size: 0.8rem;
+  color: #8a8a8a;
+  margin-left: 0.1rem;
+}
+
+.good {
+  color: #16a34a;
+}
+
+.mid {
+  color: #0a0a0a;
+}
+
+.low {
+  color: #d71921;
+}

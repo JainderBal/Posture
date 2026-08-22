@@ -1,6 +1,14 @@
 import { describe, expect, test } from "vitest";
-import { pointDistance, lineAngleDegrees, calibrate } from "./posture";
-import type { PostureLandmarks, Point } from "../types/posture";
+import {
+  pointDistance,
+  lineAngleDegrees,
+  calibrate,
+  checkHead,
+  checkShoulders,
+  checkDistance,
+  computeScore,
+} from "./posture";
+import type { PostureLandmarks, Point, CheckResult } from "../types/posture";
 
 // Builds a PostureLandmarks sample from the two metrics calibrate cares about:
 // an eye/shoulder line angle and an eye separation distance.
@@ -53,5 +61,58 @@ describe("calibrate", () => {
   test("averages the eye-line angle across samples", () => {
     const baseline = calibrate([makeSample(10, 0), makeSample(10, 30)]);
     expect(baseline.eyeAngleDegrees).toBeCloseTo(15);
+  });
+});
+
+describe("checkHead", () => {
+  const baseline = calibrate([makeSample(10, 0)]);
+
+  test("passes when head tilt is within tolerance", () => {
+    expect(checkHead(makeSample(10, 3), baseline).pass).toBe(true);
+  });
+
+  test("fails when head tilt exceeds tolerance", () => {
+    expect(checkHead(makeSample(10, 12), baseline).pass).toBe(false);
+  });
+});
+
+describe("checkShoulders", () => {
+  const baseline = calibrate([makeSample(10, 0)]);
+
+  test("passes when shoulder tilt is within tolerance", () => {
+    expect(checkShoulders(makeSample(10, 4), baseline).pass).toBe(true);
+  });
+
+  test("fails when shoulder tilt exceeds tolerance", () => {
+    expect(checkShoulders(makeSample(10, 12), baseline).pass).toBe(false);
+  });
+});
+
+describe("checkDistance", () => {
+  const baseline = calibrate([makeSample(10, 0)]);
+
+  test("passes when the face is at roughly the baseline distance", () => {
+    expect(checkDistance(makeSample(11, 0), baseline).pass).toBe(true);
+  });
+
+  test("fails when the face is much closer than baseline", () => {
+    expect(checkDistance(makeSample(13, 0), baseline).pass).toBe(false);
+  });
+});
+
+describe("computeScore", () => {
+  const pass: CheckResult = { pass: true, delta: 0 };
+  const fail: CheckResult = { pass: false, delta: 99 };
+
+  test("is 100 when all checks pass", () => {
+    expect(computeScore(pass, pass, pass)).toBe(100);
+  });
+
+  test("is 0 when all checks fail", () => {
+    expect(computeScore(fail, fail, fail)).toBe(0);
+  });
+
+  test("drops by the head weight when only the head check fails", () => {
+    expect(computeScore(fail, pass, pass)).toBe(60);
   });
 });

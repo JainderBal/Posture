@@ -1,21 +1,36 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import PopupHeader from "./PopupHeader";
 import WebcamFeed from "./WebcamFeed";
 import LandmarkOverlay from "./LandmarkOverlay";
 import CalibrateButton from "./CalibrateButton";
-import type { PostureLandmarks, Baseline } from "../types/posture";
+import ScoreBadge from "./ScoreBadge";
+import Checklist from "./Checklist";
+import { ASSESSMENT_POLL_MS } from "../lib/constants";
+import type { PostureLandmarks, Baseline, PostureAssessment } from "../types/posture";
 import styles from "./App.module.css";
 
-// Posture checks shown in the card. Stage 4 replaces these placeholders with live results.
-const POSTURE_CHECKS = ["Head", "Shoulders", "Screen distance"] as const;
-
-// Popup card window. Stage 3: adds calibration capturing a good-posture baseline.
+// Popup card window. Stage 4: live per-check score + checklist against the baseline.
 export default function App() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const landmarksRef = useRef<PostureLandmarks | null>(null);
+  const baselineRef = useRef<Baseline | null>(null);
+  const assessmentRef = useRef<PostureAssessment | null>(null);
+
   const [baseline, setBaseline] = useState<Baseline | null>(null);
+  const [assessment, setAssessment] = useState<PostureAssessment | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  // Keep the ref the overlay reads in sync with the baseline state.
+  useEffect(() => {
+    baselineRef.current = baseline;
+  }, [baseline]);
+
+  // Poll the latest assessment (written each frame by the overlay) to drive the UI.
+  useEffect(() => {
+    const id = window.setInterval(() => setAssessment(assessmentRef.current), ASSESSMENT_POLL_MS);
+    return () => window.clearInterval(id);
+  }, []);
 
   function handleCalibrated(next: Baseline) {
     setBaseline(next);
@@ -24,10 +39,7 @@ export default function App() {
 
   const isCalibrated = baseline !== null;
   const statusText =
-    notice ??
-    (baseline
-      ? `Baseline · eye ${baseline.eyeAngleDegrees.toFixed(1)}° · shoulder ${baseline.shoulderAngleDegrees.toFixed(1)}° · dist ${baseline.eyeDistance.toFixed(3)}`
-      : "Sit up straight, then calibrate");
+    notice ?? (isCalibrated ? "Calibrated" : "Sit up straight, then calibrate");
 
   return (
     <motion.div
@@ -40,27 +52,19 @@ export default function App() {
 
       <div className={styles.viewfinder}>
         <WebcamFeed videoRef={videoRef}>
-          <LandmarkOverlay videoRef={videoRef} landmarksRef={landmarksRef} calibrated={isCalibrated} />
+          <LandmarkOverlay
+            videoRef={videoRef}
+            landmarksRef={landmarksRef}
+            baselineRef={baselineRef}
+            assessmentRef={assessmentRef}
+          />
         </WebcamFeed>
       </div>
 
       <div className={styles.panel}>
         <div className={`${styles.readouts} ${isCalibrated ? "" : styles.locked}`}>
-          <div className={styles.scoreRow}>
-            <span className={styles.scoreLabel}>Score</span>
-            <span className={styles.scoreValue}>
-              —<span className={styles.scoreUnit}>%</span>
-            </span>
-          </div>
-
-          <ul className={styles.checklist}>
-            {POSTURE_CHECKS.map((check) => (
-              <li key={check} className={styles.checkRow}>
-                <span className={styles.checkLabel}>{check}</span>
-                <span className={styles.checkPending} aria-label="pending" />
-              </li>
-            ))}
-          </ul>
+          <ScoreBadge score={assessment?.score ?? null} />
+          <Checklist assessment={assessment} />
         </div>
 
         <div className={styles.actions}>

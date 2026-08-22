@@ -1,6 +1,20 @@
 // Pure posture geometry + calibration. No React, no DOM, no side effects.
 
-import type { Point, PostureLandmarks, Baseline } from "../types/posture";
+import type {
+  Point,
+  PostureLandmarks,
+  Baseline,
+  CheckResult,
+  PostureAssessment,
+} from "../types/posture";
+import {
+  HEAD_TILT_TOLERANCE_DEGREES,
+  SHOULDER_TILT_TOLERANCE_DEGREES,
+  DISTANCE_TOO_CLOSE_RATIO,
+  SCORE_WEIGHT_HEAD,
+  SCORE_WEIGHT_SHOULDERS,
+  SCORE_WEIGHT_DISTANCE,
+} from "./constants";
 
 // Euclidean distance between two points.
 export function pointDistance(a: Point, b: Point): number {
@@ -29,4 +43,46 @@ export function calibrate(samples: PostureLandmarks[]): Baseline {
     shoulderAngleDegrees: average(shoulderAngles),
     eyeDistance: average(eyeDistances),
   };
+}
+
+// Checks head tilt: how far the eye-line angle has drifted from the baseline.
+export function checkHead(landmarks: PostureLandmarks, baseline: Baseline): CheckResult {
+  const angle = lineAngleDegrees(landmarks.leftEye, landmarks.rightEye);
+  const delta = Math.abs(angle - baseline.eyeAngleDegrees);
+  return { pass: delta <= HEAD_TILT_TOLERANCE_DEGREES, delta };
+}
+
+// Checks shoulder tilt: how far the shoulder-line angle has drifted from baseline.
+export function checkShoulders(landmarks: PostureLandmarks, baseline: Baseline): CheckResult {
+  const angle = lineAngleDegrees(landmarks.leftShoulder, landmarks.rightShoulder);
+  const delta = Math.abs(angle - baseline.shoulderAngleDegrees);
+  return { pass: delta <= SHOULDER_TILT_TOLERANCE_DEGREES, delta };
+}
+
+// Checks screen distance: the eyes appear farther apart as the face nears the screen.
+export function checkDistance(landmarks: PostureLandmarks, baseline: Baseline): CheckResult {
+  const distance = pointDistance(landmarks.leftEye, landmarks.rightEye);
+  const ratio = distance / baseline.eyeDistance;
+  return { pass: ratio <= DISTANCE_TOO_CLOSE_RATIO, delta: ratio };
+}
+
+// Combines the three checks into a weighted 0-100 posture score.
+export function computeScore(
+  head: CheckResult,
+  shoulders: CheckResult,
+  distance: CheckResult
+): number {
+  const weighted =
+    SCORE_WEIGHT_HEAD * (head.pass ? 1 : 0) +
+    SCORE_WEIGHT_SHOULDERS * (shoulders.pass ? 1 : 0) +
+    SCORE_WEIGHT_DISTANCE * (distance.pass ? 1 : 0);
+  return Math.round(100 * weighted);
+}
+
+// Runs all checks against the baseline and returns a full assessment.
+export function assessPosture(landmarks: PostureLandmarks, baseline: Baseline): PostureAssessment {
+  const head = checkHead(landmarks, baseline);
+  const shoulders = checkShoulders(landmarks, baseline);
+  const distance = checkDistance(landmarks, baseline);
+  return { head, shoulders, distance, score: computeScore(head, shoulders, distance) };
 }

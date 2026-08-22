@@ -1,0 +1,46 @@
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0a0a0a;
+}
+
+.mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 50%;
+}
+
+.pending {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid #d4d4d4;
+}
+
+.pass {
+  color: #16a34a;
+}
+
+.fail {
+  color: #d71921;
+}

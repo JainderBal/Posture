@@ -8,7 +8,8 @@ import {
   type Landmarkers,
   type FrameLandmarks,
 } from "../lib/mediapipe";
-import type { PostureLandmarks } from "../types/posture";
+import { assessPosture } from "../lib/posture";
+import type { PostureLandmarks, Baseline, PostureAssessment } from "../types/posture";
 import {
   DETECT_INTERVAL_MS,
   POSE_DOT_RADIUS,
@@ -28,19 +29,17 @@ interface OverlayColors {
   connector: string;
 }
 
-const UNCALIBRATED_COLORS: OverlayColors = {
+const GOOD_COLORS: OverlayColors = { dot: OVERLAY_DOT_GOOD, connector: OVERLAY_CONNECTOR_GOOD };
+const BAD_COLORS: OverlayColors = {
   dot: OVERLAY_DOT_UNCALIBRATED,
   connector: OVERLAY_CONNECTOR_UNCALIBRATED,
-};
-const GOOD_COLORS: OverlayColors = {
-  dot: OVERLAY_DOT_GOOD,
-  connector: OVERLAY_CONNECTOR_GOOD,
 };
 
 interface LandmarkOverlayProps {
   videoRef: RefObject<HTMLVideoElement>;
   landmarksRef: MutableRefObject<PostureLandmarks | null>;
-  calibrated: boolean;
+  baselineRef: MutableRefObject<Baseline | null>;
+  assessmentRef: MutableRefObject<PostureAssessment | null>;
 }
 
 // Draws a set of normalized landmarks as filled dots on the canvas context.
@@ -88,12 +87,13 @@ function drawConnector(
   ctx.stroke();
 }
 
-// Clears the canvas and draws the latest face + pose landmarks over the video.
+// Clears the canvas and draws the face + shoulder landmarks, each in its own color.
 function drawFrame(
   canvas: HTMLCanvasElement,
   video: HTMLVideoElement,
   frame: FrameLandmarks | null,
-  colors: OverlayColors
+  faceColors: OverlayColors,
+  shoulderColors: OverlayColors
 ) {
   const width = video.clientWidth;
   const height = video.clientHeight;
@@ -108,27 +108,26 @@ function drawFrame(
   const [faceLandmarks] = frame.face.faceLandmarks;
   if (faceLandmarks) {
     const facePoints = selectLandmarks(faceLandmarks, POSTURE_FACE_INDICES);
-    drawConnector(ctx, facePoints, width, height, colors.connector);
-    drawDots(ctx, facePoints, width, height, FACE_DOT_RADIUS, colors.dot);
+    drawConnector(ctx, facePoints, width, height, faceColors.connector);
+    drawDots(ctx, facePoints, width, height, FACE_DOT_RADIUS, faceColors.dot);
   }
 
   const [poseLandmarks] = frame.pose.landmarks;
   if (poseLandmarks) {
     const shoulderPoints = selectLandmarks(poseLandmarks, POSTURE_POSE_INDICES);
-    drawConnector(ctx, shoulderPoints, width, height, colors.connector);
-    drawDots(ctx, shoulderPoints, width, height, POSE_DOT_RADIUS, colors.dot);
+    drawConnector(ctx, shoulderPoints, width, height, shoulderColors.connector);
+    drawDots(ctx, shoulderPoints, width, height, POSE_DOT_RADIUS, shoulderColors.dot);
   }
 }
 
-// Overlays a canvas on the webcam feed and renders live MediaPipe landmark dots.
-export default function LandmarkOverlay({ videoRef, landmarksRef, calibrated }: LandmarkOverlayProps) {
+// Overlays a canvas on the webcam feed: live landmark dots colored by posture checks.
+export default function LandmarkOverlay({
+  videoRef,
+  landmarksRef,
+  baselineRef,
+  assessmentRef,
+}: LandmarkOverlayProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const colorsRef = useRef<OverlayColors>(UNCALIBRATED_COLORS);
-
-  // Flip dot/line colors green once a baseline exists.
-  useEffect(() => {
-    colorsRef.current = calibrated ? GOOD_COLORS : UNCALIBRATED_COLORS;
-  }, [calibrated]);
 
   useEffect(() => {
     let landmarkers: Landmarkers | null = null;
@@ -144,13 +143,21 @@ export default function LandmarkOverlay({ videoRef, landmarksRef, calibrated }: 
       if (!video || !canvas || !landmarkers || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
         return;
       }
+
       const now = performance.now();
       if (now - lastDetectAt >= DETECT_INTERVAL_MS) {
         lastDetectAt = now;
         latestFrame = detectFrame(landmarkers, video, now);
-        landmarksRef.current = extractPostureLandmarks(latestFrame);
+        const landmarks = extractPostureLandmarks(latestFrame);
+        landmarksRef.current = landmarks;
+        const baseline = baselineRef.current;
+        assessmentRef.current = landmarks && baseline ? assessPosture(landmarks, baseline) : null;
       }
-      drawFrame(canvas, video, latestFrame, colorsRef.current);
+
+      const assessment = assessmentRef.current;
+      const faceColors = assessment?.head.pass ? GOOD_COLORS : BAD_COLORS;
+      const shoulderColors = assessment?.shoulders.pass ? GOOD_COLORS : BAD_COLORS;
+      drawFrame(canvas, video, latestFrame, faceColors, shoulderColors);
     }
 
     async function start() {
@@ -169,7 +176,7 @@ export default function LandmarkOverlay({ videoRef, landmarksRef, calibrated }: 
       cancelAnimationFrame(animationId);
       if (landmarkers) closeLandmarkers(landmarkers);
     };
-  }, [videoRef, landmarksRef]);
+  }, [videoRef, landmarksRef, baselineRef, assessmentRef]);
 
   return <canvas ref={canvasRef} className={styles.overlay} />;
 }
