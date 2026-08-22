@@ -7,7 +7,18 @@ import {
   FaceLandmarker,
   type PoseLandmarkerResult,
   type FaceLandmarkerResult,
+  type NormalizedLandmark,
 } from "@mediapipe/tasks-vision";
+import type { Point, PostureLandmarks } from "../types/posture";
+import {
+  FACE_NOSE_TIP_INDEX,
+  FACE_LEFT_IRIS_INDEX,
+  FACE_RIGHT_IRIS_INDEX,
+  FACE_LEFT_EAR_INDEX,
+  FACE_RIGHT_EAR_INDEX,
+  POSE_LEFT_SHOULDER_INDEX,
+  POSE_RIGHT_SHOULDER_INDEX,
+} from "./constants";
 
 const WASM_BASE_PATH = "/wasm";
 const POSE_MODEL_PATH = "/models/pose_landmarker_lite.task";
@@ -85,4 +96,38 @@ export function detectFrame(
 export function closeLandmarkers(landmarkers: Landmarkers): void {
   landmarkers.pose.close();
   landmarkers.face.close();
+}
+
+function toPoint(landmark: NormalizedLandmark): Point {
+  return { x: landmark.x, y: landmark.y };
+}
+
+// Extracts the posture-relevant points from a detection frame, or null if the
+// face or body wasn't fully detected this frame.
+export function extractPostureLandmarks(frame: FrameLandmarks): PostureLandmarks | null {
+  const [face] = frame.face.faceLandmarks;
+  const [pose] = frame.pose.landmarks;
+  if (!face || !pose) return null;
+
+  const points = {
+    leftEye: face[FACE_LEFT_IRIS_INDEX],
+    rightEye: face[FACE_RIGHT_IRIS_INDEX],
+    leftEar: face[FACE_LEFT_EAR_INDEX],
+    rightEar: face[FACE_RIGHT_EAR_INDEX],
+    nose: face[FACE_NOSE_TIP_INDEX],
+    leftShoulder: pose[POSE_LEFT_SHOULDER_INDEX],
+    rightShoulder: pose[POSE_RIGHT_SHOULDER_INDEX],
+  };
+
+  if (Object.values(points).some((landmark) => !landmark)) return null;
+
+  return {
+    leftEye: toPoint(points.leftEye),
+    rightEye: toPoint(points.rightEye),
+    leftEar: toPoint(points.leftEar),
+    rightEar: toPoint(points.rightEar),
+    nose: toPoint(points.nose),
+    leftShoulder: toPoint(points.leftShoulder),
+    rightShoulder: toPoint(points.rightShoulder),
+  };
 }

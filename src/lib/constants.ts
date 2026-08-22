@@ -3,13 +3,20 @@
 // Throttle landmark detection to keep CPU reasonable (~20 detections/sec).
 export const DETECT_INTERVAL_MS = 50;
 
+// Calibration captures posture samples over a short window, then averages them.
+export const CALIBRATION_DURATION_MS = 1500;
+export const CALIBRATION_SAMPLE_INTERVAL_MS = 100;
+
 // Landmark dot + connector rendering on the overlay canvas.
 export const POSE_DOT_RADIUS = 3.5;
 export const FACE_DOT_RADIUS = 2.5;
-export const POSE_DOT_COLOR = "#d71921"; // shoulders (red accent)
-export const FACE_DOT_COLOR = "#d71921"; // eyes, nose, ears (red accent)
-export const CONNECTOR_COLOR = "rgba(215, 25, 33, 0.65)"; // thin lines linking dots
 export const CONNECTOR_WIDTH = 1.5;
+
+// Overlay colors switch by state: red before calibration, green once calibrated.
+export const OVERLAY_DOT_UNCALIBRATED = "#d71921";
+export const OVERLAY_CONNECTOR_UNCALIBRATED = "rgba(215, 25, 33, 0.65)";
+export const OVERLAY_DOT_GOOD = "#16a34a";
+export const OVERLAY_CONNECTOR_GOOD = "rgba(22, 163, 74, 0.65)";
 
 // Shoulders come from the Pose model (it has no face precision but tracks the body).
 export const POSE_LEFT_SHOULDER_INDEX = 11;
