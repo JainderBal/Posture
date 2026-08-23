@@ -18,7 +18,8 @@ export default function QuitConfirm({ onCancel, onConfirm }: QuitConfirmProps) {
       >
         <p className={styles.title}>Close the coach?</p>
         <p className={styles.message}>
-          Posture monitoring stops and the popup won't nag you anymore. Your dashboard stays open.
+          Posture monitoring stops and the popup won't nag you. Reopen it anytime from the
+          dashboard's "Open coach".
         </p>
         <div className={styles.actions}>
           <button type="button" className={styles.keep} onClick={onCancel}>

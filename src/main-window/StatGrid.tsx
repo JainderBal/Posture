@@ -23,10 +23,8 @@ export default function StatGrid({ stats }: StatGridProps) {
     <div className={styles.grid}>
       {tiles.map((tile) => (
         <div key={tile.label} className={styles.tile}>
-          <span className={styles.valueRow}>
-            <span className={`${styles.value} ${tile.accent ? styles.accent : ""}`}>{tile.value}</span>
-            {tile.sub && <span className={styles.sub}>{tile.sub}</span>}
-          </span>
+          <span className={`${styles.value} ${tile.accent ? styles.accent : ""}`}>{tile.value}</span>
+          {tile.sub && <span className={styles.sub}>{tile.sub}</span>}
           <span className={styles.label}>{tile.label}</span>
         </div>
       ))}

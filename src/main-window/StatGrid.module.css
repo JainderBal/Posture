@@ -19,12 +19,6 @@
   border-left: none;
 }
 
-.valueRow {
-  display: flex;
-  align-items: baseline;
-  gap: 0.35rem;
-}
-
 .value {
   font-size: 1.9rem;
   font-weight: 600;
@@ -34,9 +28,7 @@
 }
 
 .sub {
-  font-size: 1.9rem;
-  font-weight: 600;
-  line-height: 1;
+  font-size: 0.68rem;
   font-variant-numeric: tabular-nums;
   color: #8a8a8a;
 }
