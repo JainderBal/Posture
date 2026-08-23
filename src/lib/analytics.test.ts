@@ -66,6 +66,7 @@ describe("sessionStats", () => {
     ];
     const stats = sessionStats(samples, 2000, 6000);
     expect(stats.goodTimeMs).toBe(10000); // 5 good samples * 2000
+    expect(stats.totalTimeMs).toBe(14000); // 7 samples * 2000
     expect(stats.averageGoodStreakMs).toBe(5000); // (4000 + 6000) / 2
     expect(stats.longestGoodStreakMs).toBe(6000);
     expect(stats.slouchCount).toBe(1);
@@ -74,6 +75,7 @@ describe("sessionStats", () => {
   test("is all-zero for no samples", () => {
     expect(sessionStats([], 2000, 6000)).toEqual({
       goodTimeMs: 0,
+      totalTimeMs: 0,
       averageGoodStreakMs: 0,
       longestGoodStreakMs: 0,
       slouchCount: 0,

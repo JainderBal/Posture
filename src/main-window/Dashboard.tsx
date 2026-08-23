@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { getSamplesInRange } from "../lib/db";
 import { sessionStats, issueCounts, bucketAverageScores } from "../lib/analytics";
 import { SAMPLE_INTERVAL_MS } from "../lib/constants";
@@ -87,7 +88,16 @@ export default function Dashboard() {
           <span className={styles.dot} />
           <h1 className={styles.kicker}>{period.label}</h1>
         </div>
-        {toggle}
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.openCoach}
+            onClick={() => void invoke("open_popup")}
+          >
+            Open coach
+          </button>
+          {toggle}
+        </div>
       </header>
 
       {samples === null ? (

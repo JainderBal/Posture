@@ -21,6 +21,31 @@
   gap: 0.6rem;
 }
 
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.openCoach {
+  padding: 0.4rem 0.85rem;
+  font-family: inherit;
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: #d71921;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.openCoach:hover {
+  opacity: 0.88;
+}
+
 .toggle {
   display: flex;
   border: 1px solid #ebebeb;

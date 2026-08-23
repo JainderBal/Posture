@@ -1,7 +1,7 @@
 // Window creation + positioning for the always-on-top popup card.
 // All window geometry lives here, never inline in main.rs / lib.rs.
 
-use tauri::{App, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
 // Popup card dimensions and screen-edge margin (logical pixels).
 const POPUP_WIDTH: f64 = 320.0;
@@ -14,7 +14,7 @@ const POPUP_TITLE: &str = "Posture Coach — Popup";
 
 // Creates the frameless, always-on-top popup window, pinned to the bottom-right.
 // It stays loaded and detecting; the frontend shows/hides it based on posture.
-pub fn create_popup_window(app: &App) -> tauri::Result<()> {
+pub fn create_popup_window(app: &AppHandle) -> tauri::Result<()> {
     let popup = WebviewWindowBuilder::new(app, POPUP_LABEL, WebviewUrl::App(POPUP_URL.into()))
         .title(POPUP_TITLE)
         .inner_size(POPUP_WIDTH, POPUP_HEIGHT)
@@ -27,6 +27,19 @@ pub fn create_popup_window(app: &App) -> tauri::Result<()> {
         .build()?;
 
     position_popup_bottom_right(&popup)?;
+    Ok(())
+}
+
+// Re-opens the popup coach from the dashboard: shows it if it exists, else
+// recreates it (used after the user has closed the popup).
+#[tauri::command]
+pub fn open_popup(app: AppHandle) -> tauri::Result<()> {
+    if let Some(existing) = app.get_webview_window(POPUP_LABEL) {
+        existing.show()?;
+        existing.set_focus()?;
+    } else {
+        create_popup_window(&app)?;
+    }
     Ok(())
 }
 

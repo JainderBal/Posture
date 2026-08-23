@@ -40,6 +40,7 @@ export function issueCounts(samples: PostureSample[]): IssueCounts {
 
 export interface SessionStats {
   goodTimeMs: number;
+  totalTimeMs: number;
   averageGoodStreakMs: number;
   longestGoodStreakMs: number;
   slouchCount: number;
@@ -86,6 +87,7 @@ export function sessionStats(
   const totalStreakMs = goodStreaksMs.reduce((sum, ms) => sum + ms, 0);
   return {
     goodTimeMs: goodCount * intervalMs,
+    totalTimeMs: samples.length * intervalMs,
     averageGoodStreakMs: goodStreaksMs.length ? Math.round(totalStreakMs / goodStreaksMs.length) : 0,
     longestGoodStreakMs: goodStreaksMs.length ? Math.max(...goodStreaksMs) : 0,
     slouchCount,

@@ -24,6 +24,7 @@ pub fn run() {
         .add_migrations("sqlite:posture.db", migrations)
         .build(),
     )
+    .invoke_handler(tauri::generate_handler![windows::open_popup])
     .setup(|app| {
       if cfg!(debug_assertions) {
         app.handle().plugin(
@@ -32,7 +33,7 @@ pub fn run() {
             .build(),
         )?;
       }
-      windows::create_popup_window(app)?;
+      windows::create_popup_window(app.handle())?;
       Ok(())
     })
     .run(tauri::generate_context!())
