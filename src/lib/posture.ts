@@ -50,12 +50,14 @@ export function lineAngleDegrees(a: Point, b: Point): number {
   return (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
 }
 
-// Vertical gap between the shoulders and the nose, normalized by eye distance
-// (so it's independent of how close the user is). Shrinks when shoulders hunch up.
+// Vertical gap between the higher shoulder and the nose, normalized by eye
+// distance. Uses the higher (smaller-gap) shoulder so a one-sided raise is
+// caught as well as a symmetric hunch. Shrinks when either shoulder rises.
 export function shoulderGap(landmarks: PostureLandmarks): number {
-  const shoulderMidY = (landmarks.leftShoulder.y + landmarks.rightShoulder.y) / 2;
   const eyeDistance = pointDistance(landmarks.leftEye, landmarks.rightEye);
-  return (shoulderMidY - landmarks.nose.y) / eyeDistance;
+  const leftGap = (landmarks.leftShoulder.y - landmarks.nose.y) / eyeDistance;
+  const rightGap = (landmarks.rightShoulder.y - landmarks.nose.y) / eyeDistance;
+  return Math.min(leftGap, rightGap);
 }
 
 // Averages a list of numbers (returns 0 for an empty list).

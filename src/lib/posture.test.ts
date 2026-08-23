@@ -100,6 +100,19 @@ describe("checkShoulders", () => {
   test("fails when the shoulders are hunched up toward the head", () => {
     expect(checkShoulders(poseWith(10, 20, 78), baseline).pass).toBe(false); // gap 5.8, ratio 0.725
   });
+
+  test("fails when only one shoulder is raised", () => {
+    const raisedOneSide: PostureLandmarks = {
+      leftEye: { x: 0, y: 0 },
+      rightEye: { x: 10, y: 0 },
+      leftEar: { x: 0, y: 0 },
+      rightEar: { x: 10, y: 0 },
+      nose: { x: 5, y: 20 },
+      leftShoulder: { x: 0, y: 80 }, // raised toward the head
+      rightShoulder: { x: 10, y: 100 }, // still at baseline height
+    };
+    expect(checkShoulders(raisedOneSide, baseline).pass).toBe(false);
+  });
 });
 
 describe("checkDistance", () => {
