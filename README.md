@@ -152,11 +152,3 @@ npm run tauri build   # outputs to src-tauri/target/release/bundle/
 npm test              # Vitest: geometry, scoring, stats, and a real-SQLite round trip
 npm run typecheck
 ```
-
----
-
-## Non-goals (v1)
-
-- No gamification / XP / leaderboard
-- No cloud sync — fully local
-- No mobile build
