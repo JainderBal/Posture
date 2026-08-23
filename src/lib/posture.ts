@@ -6,6 +6,7 @@ import type {
   Baseline,
   CheckResult,
   PostureAssessment,
+  PostureSample,
 } from "../types/posture";
 import {
   HEAD_TILT_TOLERANCE_DEGREES,
@@ -118,6 +119,17 @@ export function assessPosture(landmarks: PostureLandmarks, baseline: Baseline): 
   const shoulders = checkShoulders(landmarks, baseline);
   const distance = checkDistance(landmarks, baseline);
   return { head, shoulders, distance, score: computeScore(head, shoulders, distance) };
+}
+
+// Maps an assessment + timestamp into a flat sample for persistence.
+export function buildSample(assessment: PostureAssessment, timestamp: number): PostureSample {
+  return {
+    timestamp,
+    score: assessment.score,
+    headOk: assessment.head.pass,
+    shouldersOk: assessment.shoulders.pass,
+    distanceOk: assessment.distance.pass,
+  };
 }
 
 export type PostureIssue = "head" | "shoulders" | "distance";

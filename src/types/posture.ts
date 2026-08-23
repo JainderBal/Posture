@@ -36,3 +36,12 @@ export interface PostureAssessment {
   distance: CheckResult;
   score: number; // 0-100
 }
+
+// A logged posture reading persisted to local SQLite (one every ~2s).
+export interface PostureSample {
+  timestamp: number;
+  score: number;
+  headOk: boolean;
+  shouldersOk: boolean;
+  distanceOk: boolean;
+}

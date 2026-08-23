@@ -8,8 +8,11 @@ import CalibrateButton from "./CalibrateButton";
 import ScoreBadge from "./ScoreBadge";
 import Checklist from "./Checklist";
 import CoachingText from "./CoachingText";
+import { buildSample } from "../lib/posture";
+import { insertSample } from "../lib/db";
 import {
   ASSESSMENT_POLL_MS,
+  SAMPLE_INTERVAL_MS,
   SCORE_SHOW_THRESHOLD,
   POPUP_SHOW_DELAY_MS,
   POPUP_HIDE_DELAY_MS,
@@ -65,6 +68,19 @@ export default function App() {
       }
     }, ASSESSMENT_POLL_MS);
 
+    return () => window.clearInterval(id);
+  }, []);
+
+  // Persist one posture sample every SAMPLE_INTERVAL_MS while calibrated.
+  // A failed write is logged but never interrupts detection.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const current = assessmentRef.current;
+      if (!baselineRef.current || !current) return;
+      void insertSample(buildSample(current, Date.now())).catch((error) =>
+        console.error("posture sample insert failed", error)
+      );
+    }, SAMPLE_INTERVAL_MS);
     return () => window.clearInterval(id);
   }, []);
 

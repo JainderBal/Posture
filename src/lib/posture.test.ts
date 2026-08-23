@@ -9,6 +9,7 @@ import {
   computeScore,
   smoothLandmarks,
   topPriorityIssue,
+  buildSample,
 } from "./posture";
 import type { PostureLandmarks, Point, CheckResult, PostureAssessment } from "../types/posture";
 
@@ -188,5 +189,23 @@ describe("topPriorityIssue", () => {
 
   test("returns distance when only distance fails", () => {
     expect(topPriorityIssue(assess(pass, pass, fail))).toBe("distance");
+  });
+});
+
+describe("buildSample", () => {
+  test("maps an assessment + timestamp into a storable sample", () => {
+    const assessment: PostureAssessment = {
+      head: { pass: true, delta: 0 },
+      shoulders: { pass: false, delta: 0 },
+      distance: { pass: true, delta: 0 },
+      score: 65,
+    };
+    expect(buildSample(assessment, 1234)).toEqual({
+      timestamp: 1234,
+      score: 65,
+      headOk: true,
+      shouldersOk: false,
+      distanceOk: true,
+    });
   });
 });

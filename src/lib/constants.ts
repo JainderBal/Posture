@@ -6,6 +6,9 @@ export const DETECT_INTERVAL_MS = 50;
 // How often the popup UI refreshes the score/checklist from the latest assessment.
 export const ASSESSMENT_POLL_MS = 150;
 
+// How often a posture sample is written to SQLite (one row every ~2s, not per-frame).
+export const SAMPLE_INTERVAL_MS = 2000;
+
 // Calibration captures posture samples over a short window, then averages them.
 export const CALIBRATION_DURATION_MS = 1500;
 export const CALIBRATION_SAMPLE_INTERVAL_MS = 100;
