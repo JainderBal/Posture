@@ -1,3 +1,4 @@
+import AnimatedNumber from "./AnimatedNumber";
 import styles from "./ScoreBadge.module.css";
 
 interface ScoreBadgeProps {
@@ -17,7 +18,7 @@ export default function ScoreBadge({ score }: ScoreBadgeProps) {
     <div className={styles.row}>
       <span className={styles.label}>Score</span>
       <span className={`${styles.value} ${score === null ? "" : scoreClass(score)}`}>
-        {score === null ? "—" : score}
+        {score === null ? "—" : <AnimatedNumber value={score} />}
         <span className={styles.unit}>%</span>
       </span>
     </div>

@@ -29,9 +29,11 @@ export default function App() {
   const assessmentRef = useRef<PostureAssessment | null>(null);
   const popupVisibleRef = useRef(true); // visible on launch so the user can calibrate
   const confirmOpenRef = useRef(false); // pause auto show/hide while confirming quit
+  const rampStartRef = useRef(100); // score the display ramps up from once posture is good
 
   const [baseline, setBaseline] = useState<Baseline | null>(null);
   const [assessment, setAssessment] = useState<PostureAssessment | null>(null);
+  const [displayScore, setDisplayScore] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
 
@@ -50,11 +52,16 @@ export default function App() {
     const id = window.setInterval(() => {
       const current = assessmentRef.current;
       setAssessment(current);
-      if (!baselineRef.current || !current || confirmOpenRef.current) return;
+      if (!baselineRef.current || !current || confirmOpenRef.current) {
+        setDisplayScore(current?.score ?? null);
+        return;
+      }
 
       const now = performance.now();
       if (current.score < SCORE_SHOW_THRESHOLD) {
         goodSince = null;
+        rampStartRef.current = current.score;
+        setDisplayScore(current.score);
         if (badSince === null) badSince = now;
         if (!popupVisibleRef.current && now - badSince >= POPUP_SHOW_DELAY_MS) {
           popupVisibleRef.current = true;
@@ -63,6 +70,10 @@ export default function App() {
       } else {
         badSince = null;
         if (goodSince === null) goodSince = now;
+        // Ramp the shown score up to 100 across the hide window — a timer feel.
+        const progress = Math.min(1, (now - goodSince) / POPUP_HIDE_DELAY_MS);
+        const start = rampStartRef.current;
+        setDisplayScore(Math.round(start + (100 - start) * progress));
         if (popupVisibleRef.current && now - goodSince >= POPUP_HIDE_DELAY_MS) {
           popupVisibleRef.current = false;
           void appWindow.hide();
@@ -131,7 +142,7 @@ export default function App() {
 
       <div className={styles.panel}>
         <div className={`${styles.readouts} ${isCalibrated ? "" : styles.locked}`}>
-          <ScoreBadge score={assessment?.score ?? null} />
+          <ScoreBadge score={displayScore} />
           <CoachingText assessment={assessment} />
           <Checklist assessment={assessment} />
         </div>
