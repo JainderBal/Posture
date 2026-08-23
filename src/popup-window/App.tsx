@@ -17,6 +17,7 @@ import {
   SCORE_SHOW_THRESHOLD,
   POPUP_SHOW_DELAY_MS,
   POPUP_HIDE_DELAY_MS,
+  SCORE_RAMP_HOLD_MS,
 } from "../lib/constants";
 import type { PostureLandmarks, Baseline, PostureAssessment } from "../types/posture";
 import styles from "./App.module.css";
@@ -70,8 +71,10 @@ export default function App() {
       } else {
         badSince = null;
         if (goodSince === null) goodSince = now;
-        // Ramp the shown score up to 100 across the hide window — a timer feel.
-        const progress = Math.min(1, (now - goodSince) / POPUP_HIDE_DELAY_MS);
+        // Ramp the shown score up to 100 a touch before the hide, so it visibly
+        // lands on 100% and holds rather than closing mid-count.
+        const rampMs = Math.max(1, POPUP_HIDE_DELAY_MS - SCORE_RAMP_HOLD_MS);
+        const progress = Math.min(1, (now - goodSince) / rampMs);
         const start = rampStartRef.current;
         setDisplayScore(Math.round(start + (100 - start) * progress));
         if (popupVisibleRef.current && now - goodSince >= POPUP_HIDE_DELAY_MS) {

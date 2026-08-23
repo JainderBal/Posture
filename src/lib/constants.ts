@@ -14,11 +14,12 @@ export const CALIBRATION_DURATION_MS = 1500;
 export const CALIBRATION_SAMPLE_INTERVAL_MS = 100;
 
 // Posture check tolerances (how far from baseline still counts as "good").
-export const HEAD_TILT_TOLERANCE_DEGREES = 7;
+// Tighter = more sensitive (catches subtler slouching).
+export const HEAD_TILT_TOLERANCE_DEGREES = 5;
 // Shoulders "hunched" when the shoulder-to-head gap shrinks below this fraction
 // of the calibrated gap (i.e. shoulders raised toward the head).
-export const SHOULDER_HUNCH_MIN_RATIO = 0.85;
-export const DISTANCE_TOO_CLOSE_RATIO = 1.15; // eyes >15% farther apart than baseline = too close
+export const SHOULDER_HUNCH_MIN_RATIO = 0.9;
+export const DISTANCE_TOO_CLOSE_RATIO = 1.1; // eyes >10% farther apart than baseline = too close
 
 // Smoothing factor for landmark positions (EMA): higher = snappier, lower = steadier.
 // Shoulders get a much lower factor because the Pose model is far noisier than the face mesh.
@@ -38,6 +39,9 @@ export const SCORE_SHOW_THRESHOLD = 80;
 // posture (debounced so it doesn't flicker near the threshold).
 export const POPUP_SHOW_DELAY_MS = 1500;
 export const POPUP_HIDE_DELAY_MS = 1200;
+// The score finishes its ramp to 100 this many ms before the popup hides, so
+// it visibly reaches 100% and holds briefly instead of closing mid-count.
+export const SCORE_RAMP_HOLD_MS = 350;
 
 // Coaching lines, shown by priority: head first, then shoulders, then distance.
 export const COACHING_HEAD = "Straighten your head";

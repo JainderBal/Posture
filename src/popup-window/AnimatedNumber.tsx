@@ -7,7 +7,7 @@ interface AnimatedNumberProps {
 }
 
 // Smoothly rolls the displayed integer toward `value` (a count-up/down effect).
-export default function AnimatedNumber({ value, durationSeconds = 0.2 }: AnimatedNumberProps) {
+export default function AnimatedNumber({ value, durationSeconds = 0.12 }: AnimatedNumberProps) {
   const motionValue = useMotionValue(value);
   const rounded = useTransform(motionValue, (v) => Math.round(v));
 
