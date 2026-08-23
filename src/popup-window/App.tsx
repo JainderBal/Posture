@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
-import { getCurrentWindow, Window } from "@tauri-apps/api/window";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import PopupHeader from "./PopupHeader";
 import WebcamFeed from "./WebcamFeed";
 import LandmarkOverlay from "./LandmarkOverlay";
@@ -114,9 +114,7 @@ export default function App() {
     setShowQuitConfirm(false);
   }
   async function confirmQuit() {
-    const main = await Window.getByLabel("main");
-    await main?.close();
-    await getCurrentWindow().close();
+    await getCurrentWindow().close(); // closes only the popup; the dashboard stays open
   }
 
   const isCalibrated = baseline !== null;

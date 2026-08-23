@@ -16,16 +16,16 @@ export default function QuitConfirm({ onCancel, onConfirm }: QuitConfirmProps) {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: "spring", stiffness: 340, damping: 26 }}
       >
-        <p className={styles.title}>Quit Posture Coach?</p>
+        <p className={styles.title}>Close the coach?</p>
         <p className={styles.message}>
-          Posture monitoring will stop — it won't pop up to remind you when you start slouching.
+          Posture monitoring stops and the popup won't nag you anymore. Your dashboard stays open.
         </p>
         <div className={styles.actions}>
           <button type="button" className={styles.keep} onClick={onCancel}>
-            Keep running
+            Keep coaching
           </button>
           <button type="button" className={styles.quit} onClick={onConfirm}>
-            Quit
+            Close
           </button>
         </div>
       </motion.div>
