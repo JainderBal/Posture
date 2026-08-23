@@ -1,0 +1,74 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid #ebebeb;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 28px rgba(10, 10, 10, 0.16);
+}
+
+.title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #0a0a0a;
+}
+
+.message {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: #6b6b6b;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.keep,
+.quit {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  font-family: inherit;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.keep {
+  color: #0a0a0a;
+  background: transparent;
+  border: 1px solid #d4d4d4;
+}
+
+.quit {
+  color: #ffffff;
+  background: #d71921;
+  border: 1px solid #d71921;
+}
+
+.keep:hover,
+.quit:hover {
+  opacity: 0.85;
+}

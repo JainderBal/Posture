@@ -1,20 +1,12 @@
-import { getCurrentWindow, Window } from "@tauri-apps/api/window";
 import LiveDot from "./LiveDot";
 import styles from "./PopupHeader.module.css";
 
-// Quits the whole app: close the dashboard then this popup (stops monitoring).
-async function quitApp() {
-  const main = await Window.getByLabel("main");
-  await main?.close();
-  await getCurrentWindow().close();
-}
-
 interface PopupHeaderProps {
-  onHide: () => void;
+  onRequestQuit: () => void;
 }
 
-// Draggable card header: wordmark, live indicator, minimize (hide) and quit.
-export default function PopupHeader({ onHide }: PopupHeaderProps) {
+// Draggable card header: wordmark, live indicator, and a quit control.
+export default function PopupHeader({ onRequestQuit }: PopupHeaderProps) {
   return (
     <header className={styles.header} data-tauri-drag-region>
       <span className={styles.wordmark}>Posture Coach</span>
@@ -22,17 +14,8 @@ export default function PopupHeader({ onHide }: PopupHeaderProps) {
         <LiveDot />
         <button
           type="button"
-          className={styles.iconButton}
-          onClick={onHide}
-          aria-label="Hide"
-          title="Hide (re-appears when you slouch)"
-        >
-          <span className={styles.minimizeGlyph} />
-        </button>
-        <button
-          type="button"
           className={`${styles.iconButton} ${styles.quit}`}
-          onClick={quitApp}
+          onClick={onRequestQuit}
           aria-label="Quit"
           title="Quit Posture Coach"
         >

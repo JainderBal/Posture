@@ -30,11 +30,14 @@ export const SCORE_WEIGHT_HEAD = 0.4;
 export const SCORE_WEIGHT_SHOULDERS = 0.35;
 export const SCORE_WEIGHT_DISTANCE = 0.25;
 
-// Popup shows when the score sits below this; a single failing check already
-// drops the score under it. Time-based debounce avoids flicker near the edge.
+// Score below this counts as bad posture (the popup pops up to coach).
+// A single failing check already drops the score under it.
 export const SCORE_SHOW_THRESHOLD = 80;
-export const POPUP_SHOW_DELAY_MS = 10000; // must be bad this long before nagging
-export const POPUP_HIDE_DELAY_MS = 2000; // must be good this long before hiding
+
+// The popup pops up after sustained bad posture and hides after sustained good
+// posture (debounced so it doesn't flicker near the threshold).
+export const POPUP_SHOW_DELAY_MS = 1500;
+export const POPUP_HIDE_DELAY_MS = 1200;
 
 // Coaching lines, shown by priority: head first, then shoulders, then distance.
 export const COACHING_HEAD = "Straighten your head";
@@ -56,7 +59,10 @@ export const OVERLAY_CONNECTOR_GOOD = "rgba(22, 163, 74, 0.65)";
 // Shoulders come from the Pose model (it has no face precision but tracks the body).
 export const POSE_LEFT_SHOULDER_INDEX = 11;
 export const POSE_RIGHT_SHOULDER_INDEX = 12;
-export const POSTURE_POSE_INDICES = [POSE_LEFT_SHOULDER_INDEX, POSE_RIGHT_SHOULDER_INDEX];
+export const POSTURE_POSE_INDICES = [
+  POSE_LEFT_SHOULDER_INDEX,
+  POSE_RIGHT_SHOULDER_INDEX,
+];
 
 // Facial reference points come from the precise Face Landmarker mesh (478 points
 // incl. iris). Iris centers sit on the pupils; the tragion points mark the ears.

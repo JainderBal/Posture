@@ -44,10 +44,3 @@
   background: #d71921;
   color: #ffffff;
 }
-
-.minimizeGlyph {
-  width: 10px;
-  height: 1.5px;
-  background: currentColor;
-  border-radius: 1px;
-}

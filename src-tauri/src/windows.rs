@@ -1,7 +1,7 @@
 // Window creation + positioning for the always-on-top popup card.
 // All window geometry lives here, never inline in main.rs / lib.rs.
 
-use tauri::{App, PhysicalPosition, WebviewUrl, WebviewWindowBuilder};
+use tauri::{App, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
 // Popup card dimensions and screen-edge margin (logical pixels).
 const POPUP_WIDTH: f64 = 320.0;
@@ -12,8 +12,8 @@ const POPUP_LABEL: &str = "popup";
 const POPUP_URL: &str = "popup.html";
 const POPUP_TITLE: &str = "Posture Coach — Popup";
 
-// Creates the frameless, always-on-top popup window, hidden by default,
-// pinned to the bottom-right of the primary display.
+// Creates the frameless, always-on-top popup window, pinned to the bottom-right.
+// It stays loaded and detecting; the frontend shows/hides it based on posture.
 pub fn create_popup_window(app: &App) -> tauri::Result<()> {
     let popup = WebviewWindowBuilder::new(app, POPUP_LABEL, WebviewUrl::App(POPUP_URL.into()))
         .title(POPUP_TITLE)
@@ -23,8 +23,6 @@ pub fn create_popup_window(app: &App) -> tauri::Result<()> {
         .always_on_top(true)
         .transparent(true)
         .skip_taskbar(true)
-        // Visible on launch so the user can calibrate; the popup window then
-        // auto-hides itself when posture is good and re-shows when it drops.
         .visible(true)
         .build()?;
 
@@ -33,7 +31,7 @@ pub fn create_popup_window(app: &App) -> tauri::Result<()> {
 }
 
 // Positions the popup at the bottom-right of the primary monitor, inset by the margin.
-fn position_popup_bottom_right(popup: &tauri::WebviewWindow) -> tauri::Result<()> {
+fn position_popup_bottom_right(popup: &WebviewWindow) -> tauri::Result<()> {
     let Some(monitor) = popup.primary_monitor()? else {
         return Ok(());
     };
