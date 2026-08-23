@@ -1,7 +1,14 @@
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { getCurrentWindow, Window } from "@tauri-apps/api/window";
 import styles from "./TitleBar.module.css";
 
 const appWindow = getCurrentWindow();
+
+// Quits the whole app: close the popup (stops monitoring) then the dashboard.
+async function quitApp() {
+  const popup = await Window.getByLabel("popup");
+  await popup?.close();
+  await appWindow.close();
+}
 
 function MinimizeIcon() {
   return (
@@ -44,8 +51,8 @@ export default function TitleBar() {
         </button>
         <button
           className={`${styles.control} ${styles.close}`}
-          onClick={() => appWindow.close()}
-          aria-label="Close"
+          onClick={quitApp}
+          aria-label="Quit"
         >
           <CloseIcon />
         </button>
