@@ -11,6 +11,7 @@ import styles from "./Dashboard.module.css";
 
 const MAX_SAMPLE_GAP_MS = SAMPLE_INTERVAL_MS * 3; // larger gaps = the app was closed
 const DAY_MS = 24 * 60 * 60 * 1000;
+const REFRESH_MS = 10000; // reload from the DB so the dashboard tracks the popup live
 
 type PeriodKey = "today" | "week";
 
@@ -54,15 +55,20 @@ export default function Dashboard() {
 
   useEffect(() => {
     let active = true;
-    setSamples(null);
-    getSamplesInRange(buildPeriod(periodKey).startMs, Date.now())
-      .then((rows) => active && setSamples(rows))
-      .catch((error) => {
-        console.error("failed to load posture samples", error);
-        if (active) setSamples([]);
-      });
+    const load = () => {
+      getSamplesInRange(buildPeriod(periodKey).startMs, Date.now())
+        .then((rows) => active && setSamples(rows))
+        .catch((error) => {
+          console.error("failed to load posture samples", error);
+          if (active) setSamples([]);
+        });
+    };
+    setSamples(null); // show loading only on a period switch, not on each refresh
+    load();
+    const id = window.setInterval(load, REFRESH_MS);
     return () => {
       active = false;
+      window.clearInterval(id);
     };
   }, [periodKey]);
 
