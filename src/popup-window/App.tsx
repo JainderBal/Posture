@@ -34,18 +34,24 @@ export default function App() {
   const rampStartRef = useRef(100); // score the display ramps up from once posture is good
   const badSinceRef = useRef<number | null>(null); // when the current bad stretch began
   const goodSinceRef = useRef<number | null>(null); // when the current good stretch began
-  const userClosedRef = useRef(false); // user dismissed the coach: pause show/hide + logging
+  const pausedRef = useRef(false); // coach dismissed: pause show/hide + logging (poll reads this)
 
   const [baseline, setBaseline] = useState<Baseline | null>(null);
   const [assessment, setAssessment] = useState<PostureAssessment | null>(null);
   const [displayScore, setDisplayScore] = useState<number | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+  const [paused, setPaused] = useState(false); // drives the camera on/off
 
   // Keep the ref the overlay reads in sync with the baseline state.
   useEffect(() => {
     baselineRef.current = baseline;
   }, [baseline]);
+
+  // Mirror the paused state into the ref the interval reads.
+  useEffect(() => {
+    pausedRef.current = paused;
+  }, [paused]);
 
   // Poll the assessment to drive the UI, and auto show/hide the popup window:
   // it appears on sustained bad posture and hides once posture recovers.
@@ -55,7 +61,7 @@ export default function App() {
     const id = window.setInterval(() => {
       const current = assessmentRef.current;
       setAssessment(current);
-      if (!baselineRef.current || !current || confirmOpenRef.current || userClosedRef.current) {
+      if (!baselineRef.current || !current || confirmOpenRef.current || pausedRef.current) {
         setDisplayScore(current?.score ?? null);
         return;
       }
@@ -93,7 +99,8 @@ export default function App() {
   // restarts the show/hide timing (auto-hides ~1.2s later if posture is good).
   useEffect(() => {
     const unlisten = listen("coach-opened", () => {
-      userClosedRef.current = false;
+      pausedRef.current = false;
+      setPaused(false); // restart the camera
       popupVisibleRef.current = true;
       goodSinceRef.current = performance.now();
       badSinceRef.current = null;
@@ -108,7 +115,7 @@ export default function App() {
   useEffect(() => {
     const id = window.setInterval(() => {
       const current = assessmentRef.current;
-      if (!baselineRef.current || !current || userClosedRef.current) return;
+      if (!baselineRef.current || !current || pausedRef.current) return;
       void insertSample(buildSample(current, Date.now())).catch((error) =>
         console.error("posture sample insert failed", error)
       );
@@ -130,12 +137,14 @@ export default function App() {
     setShowQuitConfirm(false);
   }
   function confirmQuit() {
-    // Hide + pause monitoring (don't destroy the window, so reopening is instant
-    // and keeps the calibration). Reopen from the dashboard's "Open coach".
+    // Hide + pause monitoring (don't destroy the window). Clear the baseline so
+    // reopening requires a fresh calibration, and stop the camera via `paused`.
     setShowQuitConfirm(false);
     confirmOpenRef.current = false;
-    userClosedRef.current = true;
     popupVisibleRef.current = false;
+    pausedRef.current = true;
+    setPaused(true);
+    setBaseline(null);
     void getCurrentWindow().hide();
   }
 
@@ -153,7 +162,7 @@ export default function App() {
       <PopupHeader onRequestQuit={requestQuit} />
 
       <div className={styles.viewfinder}>
-        <WebcamFeed videoRef={videoRef}>
+        <WebcamFeed videoRef={videoRef} paused={paused}>
           <LandmarkOverlay
             videoRef={videoRef}
             landmarksRef={landmarksRef}
