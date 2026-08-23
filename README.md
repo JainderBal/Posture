@@ -53,6 +53,23 @@ POPUP (webcam + MediaPipe + checks)  --writes-->  SQLite  <--reads--  DASHBOARD 
 
 All **posture math is pure and unit-tested** (`src/lib/posture.ts`, `src/lib/analytics.ts`) — no geometry or scoring lives inside React components. Components only render.
 
+### Data model
+
+One `posture_samples` row is written every ~2s while monitoring (created by a Rust migration; all access goes through `src/lib/db.ts`):
+
+```sql
+CREATE TABLE posture_samples (
+  id            INTEGER PRIMARY KEY AUTOINCREMENT,
+  timestamp     INTEGER NOT NULL,  -- epoch milliseconds
+  score         INTEGER NOT NULL,  -- 0-100
+  head_ok       INTEGER NOT NULL,  -- 0 / 1
+  shoulders_ok  INTEGER NOT NULL,  -- 0 / 1
+  distance_ok   INTEGER NOT NULL   -- 0 / 1
+);
+```
+
+Stored at `%APPDATA%/com.jainderbal.posturecoach/posture.db` on Windows. Booleans are `0/1` integers; the dashboard aggregates these rows into the streak/trend stats.
+
 ---
 
 ## How the logic works
