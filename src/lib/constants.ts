@@ -33,7 +33,7 @@ export const SCORE_WEIGHT_DISTANCE = 0.25;
 // Popup shows when the score sits below this; a single failing check already
 // drops the score under it. Time-based debounce avoids flicker near the edge.
 export const SCORE_SHOW_THRESHOLD = 80;
-export const POPUP_SHOW_DELAY_MS = 1200; // must be bad this long before nagging
+export const POPUP_SHOW_DELAY_MS = 10000; // must be bad this long before nagging
 export const POPUP_HIDE_DELAY_MS = 2000; // must be good this long before hiding
 
 // Coaching lines, shown by priority: head first, then shoulders, then distance.
