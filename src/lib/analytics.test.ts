@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { averageScore, postureSplit, issueCounts, bucketAverageScores } from "./analytics";
+import {
+  averageScore,
+  postureSplit,
+  issueCounts,
+  bucketAverageScores,
+  sessionStats,
+  formatDuration,
+} from "./analytics";
 import type { PostureSample } from "../types/posture";
 
 function sample(
@@ -42,6 +49,43 @@ describe("issueCounts", () => {
       sample(1, 50, false, false, true),
     ]);
     expect(counts).toEqual({ head: 2, shoulders: 1, distance: 0 });
+  });
+});
+
+describe("sessionStats", () => {
+  test("computes good time, streaks, and slouch count", () => {
+    // interval 2000ms, gap cap 6000ms; good = score >= 80
+    const samples = [
+      sample(0, 100, true, true, true),
+      sample(2000, 100, true, true, true),
+      sample(4000, 50, false, false, true), // slouch begins
+      sample(6000, 50, false, false, true),
+      sample(8000, 90, true, true, true),
+      sample(10000, 90, true, true, true),
+      sample(12000, 90, true, true, true),
+    ];
+    const stats = sessionStats(samples, 2000, 6000);
+    expect(stats.goodTimeMs).toBe(10000); // 5 good samples * 2000
+    expect(stats.averageGoodStreakMs).toBe(5000); // (4000 + 6000) / 2
+    expect(stats.longestGoodStreakMs).toBe(6000);
+    expect(stats.slouchCount).toBe(1);
+  });
+
+  test("is all-zero for no samples", () => {
+    expect(sessionStats([], 2000, 6000)).toEqual({
+      goodTimeMs: 0,
+      averageGoodStreakMs: 0,
+      longestGoodStreakMs: 0,
+      slouchCount: 0,
+    });
+  });
+});
+
+describe("formatDuration", () => {
+  test("formats seconds, minutes, and hours", () => {
+    expect(formatDuration(45000)).toBe("45s");
+    expect(formatDuration(6 * 60000)).toBe("6m");
+    expect(formatDuration(84 * 60000)).toBe("1h 24m");
   });
 });
 

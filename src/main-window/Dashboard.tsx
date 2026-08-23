@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { getSamplesInRange } from "../lib/db";
-import { averageScore, postureSplit, issueCounts, bucketAverageScores } from "../lib/analytics";
+import { sessionStats, issueCounts, bucketAverageScores } from "../lib/analytics";
+import { SAMPLE_INTERVAL_MS } from "../lib/constants";
+import StatGrid from "./StatGrid";
 import ScoreTrendChart from "./ScoreTrendChart";
-import PostureSplitChart from "./PostureSplitChart";
 import CommonIssuesList from "./CommonIssuesList";
 import type { PostureSample } from "../types/posture";
 import styles from "./Dashboard.module.css";
 
 const TREND_BUCKET_MS = 10 * 60 * 1000; // average scores into 10-minute buckets
+const MAX_SAMPLE_GAP_MS = SAMPLE_INTERVAL_MS * 3; // larger gaps = app was closed
 
 function startOfTodayMs(): number {
   const date = new Date();
@@ -43,26 +45,20 @@ export default function Dashboard() {
     );
   }
 
-  const split = postureSplit(samples);
+  const stats = sessionStats(samples, SAMPLE_INTERVAL_MS, MAX_SAMPLE_GAP_MS);
   const issues = issueCounts(samples);
   const trend = bucketAverageScores(samples, TREND_BUCKET_MS);
 
   return (
     <div className={styles.dashboard}>
       <header className={styles.header}>
-        <p className={styles.kicker}>Today</p>
-        <p className={styles.average}>
-          {averageScore(samples)}
-          <span className={styles.averageUnit}>avg score</span>
-        </p>
+        <span className={styles.dot} />
+        <h1 className={styles.kicker}>Today</h1>
       </header>
 
+      <StatGrid stats={stats} />
       <ScoreTrendChart data={trend} />
-
-      <div className={styles.grid}>
-        <PostureSplitChart split={split} />
-        <CommonIssuesList counts={issues} total={samples.length} />
-      </div>
+      <CommonIssuesList counts={issues} total={samples.length} />
     </div>
   );
 }

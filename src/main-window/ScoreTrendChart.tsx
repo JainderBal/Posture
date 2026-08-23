@@ -43,7 +43,7 @@ export default function ScoreTrendChart({ data }: ScoreTrendChartProps) {
               fontFamily: "ui-monospace, monospace",
             }}
           />
-          <Line type="monotone" dataKey="averageScore" stroke="#0a0a0a" strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="averageScore" stroke="#d71921" strokeWidth={2} dot={false} />
         </LineChart>
       </ResponsiveContainer>
     </section>

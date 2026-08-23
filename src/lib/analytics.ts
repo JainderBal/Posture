@@ -38,6 +38,69 @@ export function issueCounts(samples: PostureSample[]): IssueCounts {
   };
 }
 
+export interface SessionStats {
+  goodTimeMs: number;
+  averageGoodStreakMs: number;
+  longestGoodStreakMs: number;
+  slouchCount: number;
+}
+
+// Duration/streak stats: total good time, average & longest good streak, and how
+// many times posture dropped. Samples more than maxGapMs apart break a streak
+// (e.g. the app was closed), so absences aren't counted as posture time.
+export function sessionStats(
+  samples: PostureSample[],
+  intervalMs: number,
+  maxGapMs: number
+): SessionStats {
+  const goodStreaksMs: number[] = [];
+  let goodCount = 0;
+  let currentRun = 0;
+  let slouchCount = 0;
+  let prevGood = false;
+  let prevTimestamp: number | null = null;
+
+  for (const s of samples) {
+    const good = s.score >= SCORE_SHOW_THRESHOLD;
+    const contiguous = prevTimestamp !== null && s.timestamp - prevTimestamp <= maxGapMs;
+    if (good) goodCount += 1;
+
+    if (good && contiguous && prevGood) {
+      currentRun += 1;
+    } else if (good) {
+      if (currentRun > 0) goodStreaksMs.push(currentRun * intervalMs);
+      currentRun = 1;
+    } else {
+      if (prevGood && contiguous) slouchCount += 1;
+      if (currentRun > 0) {
+        goodStreaksMs.push(currentRun * intervalMs);
+        currentRun = 0;
+      }
+    }
+
+    prevGood = good;
+    prevTimestamp = s.timestamp;
+  }
+  if (currentRun > 0) goodStreaksMs.push(currentRun * intervalMs);
+
+  const totalStreakMs = goodStreaksMs.reduce((sum, ms) => sum + ms, 0);
+  return {
+    goodTimeMs: goodCount * intervalMs,
+    averageGoodStreakMs: goodStreaksMs.length ? Math.round(totalStreakMs / goodStreaksMs.length) : 0,
+    longestGoodStreakMs: goodStreaksMs.length ? Math.max(...goodStreaksMs) : 0,
+    slouchCount,
+  };
+}
+
+// Human-friendly duration: "45s", "6m", or "1h 24m".
+export function formatDuration(ms: number): string {
+  const totalSeconds = Math.round(ms / 1000);
+  if (totalSeconds < 60) return `${totalSeconds}s`;
+  const minutes = Math.floor(totalSeconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+}
+
 export interface ScoreBucket {
   bucketStart: number;
   averageScore: number;
