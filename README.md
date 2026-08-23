@@ -16,7 +16,7 @@ A small floating card appears in the corner **only when you slouch**, shows exac
 - **Only nags when needed** — the floating coach pops up after you've been slouching for ~1.5s and hides ~1.2s after you recover.
 - **Tells you the fix** — a red/green overlay on your webcam plus one coaching line ("Straighten your head", "Relax your shoulders", "Sit back from the screen").
 - **History dashboard** — good-posture time, average & best good streaks, number of slouches, a score trend, and your most common issues, for Today or the last 7 days.
-- **Runs in the background** — system tray with Show Dashboard / Show Coach / Quit, and an optional launch-at-startup.
+- **Runs in the background** — system tray with Show Dashboard / Show Coach / Quit, and an optional launch-at-startup. Because the coach keeps the webcam open in the background, only one copy runs at a time — relaunching just reopens the dashboard of the instance that's already running instead of fighting it for the camera.
 
 ## Privacy
 
@@ -35,7 +35,7 @@ Everything is **fully local**. The webcam stream is processed in-app via WebAsse
 | Storage | **SQLite** via `tauri-plugin-sql` | Local posture history |
 | Charts | **Recharts** | Dashboard trend chart |
 | Animation | **Motion** (Framer Motion) | Spring transitions, the score count-up |
-| Tray / startup | Tauri tray + `tauri-plugin-autostart` | Background-app behavior |
+| Tray / startup | Tauri tray + `tauri-plugin-autostart` + `tauri-plugin-single-instance` | Background-app behavior; one running copy owns the webcam |
 | Tests | **Vitest** | Unit tests for the pure geometry/scoring/stats |
 
 ---
@@ -126,7 +126,7 @@ src/
 └── shared/          cross-window helpers
 src-tauri/
 ├── src/
-│   ├── lib.rs         app setup, SQL migration, tray, autostart
+│   ├── lib.rs         app setup, SQL migration, tray, autostart, single-instance
 │   └── windows.rs     popup creation/positioning, show/open commands
 scripts/
 └── prepare-assets.mjs downloads MediaPipe models + copies the WASM runtime locally
