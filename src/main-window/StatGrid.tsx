@@ -8,7 +8,7 @@ interface StatGridProps {
 // The headline duration/streak stats as a technical, hairline-separated grid.
 export default function StatGrid({ stats }: StatGridProps) {
   const tiles = [
-    { label: "Good time", value: formatDuration(stats.goodTimeMs), accent: false },
+    { label: "Good posture", value: formatDuration(stats.goodTimeMs), accent: false },
     { label: "Avg streak", value: formatDuration(stats.averageGoodStreakMs), accent: false },
     { label: "Best streak", value: formatDuration(stats.longestGoodStreakMs), accent: false },
     { label: "Slouches", value: String(stats.slouchCount), accent: true },

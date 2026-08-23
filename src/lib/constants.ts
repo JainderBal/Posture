@@ -24,7 +24,7 @@ export const DISTANCE_TOO_CLOSE_RATIO = 1.1; // eyes >10% farther apart than bas
 // Smoothing factor for landmark positions (EMA): higher = snappier, lower = steadier.
 // Shoulders get a much lower factor because the Pose model is far noisier than the face mesh.
 export const LANDMARK_SMOOTHING_ALPHA = 0.4;
-export const SHOULDER_SMOOTHING_ALPHA = 0.12;
+export const SHOULDER_SMOOTHING_ALPHA = 0.35;
 
 // Score weights per check (sum to 1). Head weighted highest.
 export const SCORE_WEIGHT_HEAD = 0.4;
