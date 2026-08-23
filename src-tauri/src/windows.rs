@@ -1,7 +1,9 @@
 // Window creation + positioning for the always-on-top popup card.
 // All window geometry lives here, never inline in main.rs / lib.rs.
 
-use tauri::{AppHandle, Manager, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri::{
+    AppHandle, Emitter, Manager, PhysicalPosition, WebviewUrl, WebviewWindow, WebviewWindowBuilder,
+};
 
 // Popup card dimensions and screen-edge margin (logical pixels).
 const POPUP_WIDTH: f64 = 320.0;
@@ -35,8 +37,11 @@ pub fn create_popup_window(app: &AppHandle) -> tauri::Result<()> {
 #[tauri::command]
 pub fn open_popup(app: AppHandle) -> tauri::Result<()> {
     if let Some(existing) = app.get_webview_window(POPUP_LABEL) {
+        position_popup_bottom_right(&existing)?;
         existing.show()?;
         existing.set_focus()?;
+        // Tell the popup it was reopened so it restarts its show/hide timing.
+        existing.emit("coach-opened", ())?;
     } else {
         create_popup_window(&app)?;
     }

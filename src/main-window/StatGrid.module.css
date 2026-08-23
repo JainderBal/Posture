@@ -34,7 +34,9 @@
 }
 
 .sub {
-  font-size: 0.62rem;
+  font-size: 1.9rem;
+  font-weight: 600;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
   color: #8a8a8a;
 }

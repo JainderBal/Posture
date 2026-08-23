@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { listen } from "@tauri-apps/api/event";
 import PopupHeader from "./PopupHeader";
 import WebcamFeed from "./WebcamFeed";
 import LandmarkOverlay from "./LandmarkOverlay";
@@ -31,6 +32,8 @@ export default function App() {
   const popupVisibleRef = useRef(true); // visible on launch so the user can calibrate
   const confirmOpenRef = useRef(false); // pause auto show/hide while confirming quit
   const rampStartRef = useRef(100); // score the display ramps up from once posture is good
+  const badSinceRef = useRef<number | null>(null); // when the current bad stretch began
+  const goodSinceRef = useRef<number | null>(null); // when the current good stretch began
 
   const [baseline, setBaseline] = useState<Baseline | null>(null);
   const [assessment, setAssessment] = useState<PostureAssessment | null>(null);
@@ -47,8 +50,6 @@ export default function App() {
   // it appears on sustained bad posture and hides once posture recovers.
   useEffect(() => {
     const appWindow = getCurrentWindow();
-    let badSince: number | null = null;
-    let goodSince: number | null = null;
 
     const id = window.setInterval(() => {
       const current = assessmentRef.current;
@@ -60,24 +61,24 @@ export default function App() {
 
       const now = performance.now();
       if (current.score < SCORE_SHOW_THRESHOLD) {
-        goodSince = null;
+        goodSinceRef.current = null;
         rampStartRef.current = current.score;
         setDisplayScore(current.score);
-        if (badSince === null) badSince = now;
-        if (!popupVisibleRef.current && now - badSince >= POPUP_SHOW_DELAY_MS) {
+        if (badSinceRef.current === null) badSinceRef.current = now;
+        if (!popupVisibleRef.current && now - badSinceRef.current >= POPUP_SHOW_DELAY_MS) {
           popupVisibleRef.current = true;
           void appWindow.show();
         }
       } else {
-        badSince = null;
-        if (goodSince === null) goodSince = now;
+        badSinceRef.current = null;
+        if (goodSinceRef.current === null) goodSinceRef.current = now;
         // Ramp the shown score up to 100 a touch before the hide, so it visibly
         // lands on 100% and holds rather than closing mid-count.
         const rampMs = Math.max(1, POPUP_HIDE_DELAY_MS - SCORE_RAMP_HOLD_MS);
-        const progress = Math.min(1, (now - goodSince) / rampMs);
+        const progress = Math.min(1, (now - goodSinceRef.current) / rampMs);
         const start = rampStartRef.current;
         setDisplayScore(Math.round(start + (100 - start) * progress));
-        if (popupVisibleRef.current && now - goodSince >= POPUP_HIDE_DELAY_MS) {
+        if (popupVisibleRef.current && now - goodSinceRef.current >= POPUP_HIDE_DELAY_MS) {
           popupVisibleRef.current = false;
           void appWindow.hide();
         }
@@ -85,6 +86,19 @@ export default function App() {
     }, ASSESSMENT_POLL_MS);
 
     return () => window.clearInterval(id);
+  }, []);
+
+  // When reopened from the dashboard, treat the popup as freshly shown so it
+  // restarts the show/hide timing (auto-hides ~1.2s later if posture is good).
+  useEffect(() => {
+    const unlisten = listen("coach-opened", () => {
+      popupVisibleRef.current = true;
+      goodSinceRef.current = performance.now();
+      badSinceRef.current = null;
+    });
+    return () => {
+      void unlisten.then((off) => off());
+    };
   }, []);
 
   // Persist one posture sample every SAMPLE_INTERVAL_MS while calibrated.
