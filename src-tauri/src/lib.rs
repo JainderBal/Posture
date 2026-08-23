@@ -50,6 +50,13 @@ pub fn run() {
   }];
 
   tauri::Builder::default()
+    // Must be registered first. Relaunching the app (e.g. from the shortcut while
+    // it's still running in the tray) would otherwise spawn a second process that
+    // fights the first for the webcam and hangs on "Starting camera…". Instead we
+    // keep the single running instance and just reveal its dashboard.
+    .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+      let _ = windows::show_main(app.clone());
+    }))
     .plugin(
       tauri_plugin_sql::Builder::default()
         .add_migrations("sqlite:posture.db", migrations)
