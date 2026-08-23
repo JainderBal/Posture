@@ -32,6 +32,16 @@ pub fn create_popup_window(app: &AppHandle) -> tauri::Result<()> {
     Ok(())
 }
 
+// Shows and focuses the main dashboard window (used from the tray).
+#[tauri::command]
+pub fn show_main(app: AppHandle) -> tauri::Result<()> {
+    if let Some(main) = app.get_webview_window("main") {
+        main.show()?;
+        main.set_focus()?;
+    }
+    Ok(())
+}
+
 // Re-opens the popup coach from the dashboard: shows it if it exists, else
 // recreates it (used after the user has closed the popup).
 #[tauri::command]

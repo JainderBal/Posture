@@ -6,6 +6,7 @@ import { SAMPLE_INTERVAL_MS } from "../lib/constants";
 import StatGrid from "./StatGrid";
 import ScoreTrendChart from "./ScoreTrendChart";
 import CommonIssuesList from "./CommonIssuesList";
+import AutostartToggle from "./AutostartToggle";
 import type { PostureSample } from "../types/posture";
 import styles from "./Dashboard.module.css";
 
@@ -95,6 +96,7 @@ export default function Dashboard() {
           <h1 className={styles.kicker}>{period.label}</h1>
         </div>
         <div className={styles.actions}>
+          <AutostartToggle />
           <button
             type="button"
             className={styles.openCoach}

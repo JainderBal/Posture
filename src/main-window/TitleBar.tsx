@@ -3,9 +3,9 @@ import styles from "./TitleBar.module.css";
 
 const appWindow = getCurrentWindow();
 
-// Closes only the dashboard window; the popup keeps monitoring.
+// Hides the dashboard (reopen it from the tray). The popup keeps monitoring.
 function closeDashboard() {
-  void appWindow.close();
+  void appWindow.hide();
 }
 
 function MinimizeIcon() {
