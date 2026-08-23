@@ -2,11 +2,6 @@ import { getCurrentWindow, Window } from "@tauri-apps/api/window";
 import LiveDot from "./LiveDot";
 import styles from "./PopupHeader.module.css";
 
-// Hides the popup temporarily; it re-appears automatically when posture drops.
-async function hidePopupWindow() {
-  await getCurrentWindow().hide();
-}
-
 // Quits the whole app: close the dashboard then this popup (stops monitoring).
 async function quitApp() {
   const main = await Window.getByLabel("main");
@@ -14,8 +9,12 @@ async function quitApp() {
   await getCurrentWindow().close();
 }
 
+interface PopupHeaderProps {
+  onHide: () => void;
+}
+
 // Draggable card header: wordmark, live indicator, minimize (hide) and quit.
-export default function PopupHeader() {
+export default function PopupHeader({ onHide }: PopupHeaderProps) {
   return (
     <header className={styles.header} data-tauri-drag-region>
       <span className={styles.wordmark}>Posture Coach</span>
@@ -24,7 +23,7 @@ export default function PopupHeader() {
         <button
           type="button"
           className={styles.iconButton}
-          onClick={hidePopupWindow}
+          onClick={onHide}
           aria-label="Hide"
           title="Hide (re-appears when you slouch)"
         >

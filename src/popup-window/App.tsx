@@ -26,6 +26,7 @@ export default function App() {
   const landmarksRef = useRef<PostureLandmarks | null>(null);
   const baselineRef = useRef<Baseline | null>(null);
   const assessmentRef = useRef<PostureAssessment | null>(null);
+  const popupVisibleRef = useRef(true); // shared truth: manual minimize + auto show/hide
 
   const [baseline, setBaseline] = useState<Baseline | null>(null);
   const [assessment, setAssessment] = useState<PostureAssessment | null>(null);
@@ -43,7 +44,6 @@ export default function App() {
     const appWindow = getCurrentWindow();
     let badSince: number | null = null;
     let goodSince: number | null = null;
-    let popupShown = true; // visible on launch so the user can calibrate
 
     const id = window.setInterval(() => {
       const current = assessmentRef.current;
@@ -54,15 +54,15 @@ export default function App() {
       if (current.score < SCORE_SHOW_THRESHOLD) {
         goodSince = null;
         if (badSince === null) badSince = now;
-        if (!popupShown && now - badSince >= POPUP_SHOW_DELAY_MS) {
-          popupShown = true;
+        if (!popupVisibleRef.current && now - badSince >= POPUP_SHOW_DELAY_MS) {
+          popupVisibleRef.current = true;
           void appWindow.show();
         }
       } else {
         badSince = null;
         if (goodSince === null) goodSince = now;
-        if (popupShown && now - goodSince >= POPUP_HIDE_DELAY_MS) {
-          popupShown = false;
+        if (popupVisibleRef.current && now - goodSince >= POPUP_HIDE_DELAY_MS) {
+          popupVisibleRef.current = false;
           void appWindow.hide();
         }
       }
@@ -70,6 +70,13 @@ export default function App() {
 
     return () => window.clearInterval(id);
   }, []);
+
+  // Manual hide from the header; keeps the shared visibility ref in sync so the
+  // auto-logic reopens it correctly the next time posture drops.
+  function handleManualHide() {
+    popupVisibleRef.current = false;
+    void getCurrentWindow().hide();
+  }
 
   // Persist one posture sample every SAMPLE_INTERVAL_MS while calibrated.
   // A failed write is logged but never interrupts detection.
@@ -100,7 +107,7 @@ export default function App() {
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={{ type: "spring", stiffness: 320, damping: 26 }}
     >
-      <PopupHeader />
+      <PopupHeader onHide={handleManualHide} />
 
       <div className={styles.viewfinder}>
         <WebcamFeed videoRef={videoRef}>
