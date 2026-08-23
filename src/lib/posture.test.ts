@@ -8,8 +8,9 @@ import {
   checkDistance,
   computeScore,
   smoothLandmarks,
+  topPriorityIssue,
 } from "./posture";
-import type { PostureLandmarks, Point, CheckResult } from "../types/posture";
+import type { PostureLandmarks, Point, CheckResult, PostureAssessment } from "../types/posture";
 
 // Builds a PostureLandmarks sample from the two metrics calibrate cares about:
 // an eye/shoulder line angle and an eye separation distance.
@@ -160,5 +161,32 @@ describe("smoothLandmarks", () => {
     const smoothed = smoothLandmarks(makeSample(10, 0), makeSample(20, 0), 1, 0);
     expect(smoothed.rightEye.x).toBeCloseTo(20);
     expect(smoothed.rightShoulder.x).toBeCloseTo(10);
+  });
+});
+
+describe("topPriorityIssue", () => {
+  const pass: CheckResult = { pass: true, delta: 0 };
+  const fail: CheckResult = { pass: false, delta: 0 };
+  const assess = (head: CheckResult, shoulders: CheckResult, distance: CheckResult): PostureAssessment => ({
+    head,
+    shoulders,
+    distance,
+    score: 0,
+  });
+
+  test("returns null when everything passes", () => {
+    expect(topPriorityIssue(assess(pass, pass, pass))).toBeNull();
+  });
+
+  test("prioritizes head over shoulders and distance", () => {
+    expect(topPriorityIssue(assess(fail, fail, fail))).toBe("head");
+  });
+
+  test("returns shoulders when head passes but shoulders fail", () => {
+    expect(topPriorityIssue(assess(pass, fail, fail))).toBe("shoulders");
+  });
+
+  test("returns distance when only distance fails", () => {
+    expect(topPriorityIssue(assess(pass, pass, fail))).toBe("distance");
   });
 });

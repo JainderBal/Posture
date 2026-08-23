@@ -1,0 +1,15 @@
+.text {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.warn {
+  color: #d71921;
+}
+
+.good {
+  color: #16a34a;
+}

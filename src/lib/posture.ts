@@ -119,3 +119,13 @@ export function assessPosture(landmarks: PostureLandmarks, baseline: Baseline): 
   const distance = checkDistance(landmarks, baseline);
   return { head, shoulders, distance, score: computeScore(head, shoulders, distance) };
 }
+
+export type PostureIssue = "head" | "shoulders" | "distance";
+
+// The most important failing check to coach on: head, then shoulders, then distance.
+export function topPriorityIssue(assessment: PostureAssessment): PostureIssue | null {
+  if (!assessment.head.pass) return "head";
+  if (!assessment.shoulders.pass) return "shoulders";
+  if (!assessment.distance.pass) return "distance";
+  return null;
+}

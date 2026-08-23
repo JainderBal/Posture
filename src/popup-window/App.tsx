@@ -1,12 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import PopupHeader from "./PopupHeader";
 import WebcamFeed from "./WebcamFeed";
 import LandmarkOverlay from "./LandmarkOverlay";
 import CalibrateButton from "./CalibrateButton";
 import ScoreBadge from "./ScoreBadge";
 import Checklist from "./Checklist";
-import { ASSESSMENT_POLL_MS } from "../lib/constants";
+import CoachingText from "./CoachingText";
+import {
+  ASSESSMENT_POLL_MS,
+  SCORE_SHOW_THRESHOLD,
+  POPUP_SHOW_DELAY_MS,
+  POPUP_HIDE_DELAY_MS,
+} from "../lib/constants";
 import type { PostureLandmarks, Baseline, PostureAssessment } from "../types/posture";
 import styles from "./App.module.css";
 
@@ -26,9 +33,38 @@ export default function App() {
     baselineRef.current = baseline;
   }, [baseline]);
 
-  // Poll the latest assessment (written each frame by the overlay) to drive the UI.
+  // Poll the latest assessment to drive the UI, and auto show/hide the popup:
+  // it appears when the score stays low, and hides once posture recovers.
+  // Time-based debounce keeps it stable even when the hidden window is throttled.
   useEffect(() => {
-    const id = window.setInterval(() => setAssessment(assessmentRef.current), ASSESSMENT_POLL_MS);
+    const appWindow = getCurrentWindow();
+    let badSince: number | null = null;
+    let goodSince: number | null = null;
+    let popupShown = true; // visible on launch so the user can calibrate
+
+    const id = window.setInterval(() => {
+      const current = assessmentRef.current;
+      setAssessment(current);
+      if (!baselineRef.current || !current) return; // no auto show/hide until calibrated
+
+      const now = performance.now();
+      if (current.score < SCORE_SHOW_THRESHOLD) {
+        goodSince = null;
+        if (badSince === null) badSince = now;
+        if (!popupShown && now - badSince >= POPUP_SHOW_DELAY_MS) {
+          popupShown = true;
+          void appWindow.show();
+        }
+      } else {
+        badSince = null;
+        if (goodSince === null) goodSince = now;
+        if (popupShown && now - goodSince >= POPUP_HIDE_DELAY_MS) {
+          popupShown = false;
+          void appWindow.hide();
+        }
+      }
+    }, ASSESSMENT_POLL_MS);
+
     return () => window.clearInterval(id);
   }, []);
 
@@ -64,6 +100,7 @@ export default function App() {
       <div className={styles.panel}>
         <div className={`${styles.readouts} ${isCalibrated ? "" : styles.locked}`}>
           <ScoreBadge score={assessment?.score ?? null} />
+          <CoachingText assessment={assessment} />
           <Checklist assessment={assessment} />
         </div>
 

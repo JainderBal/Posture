@@ -23,8 +23,8 @@ pub fn create_popup_window(app: &App) -> tauri::Result<()> {
         .always_on_top(true)
         .transparent(true)
         .skip_taskbar(true)
-        // TODO(stage-5): revert to .visible(false) once score-driven show/hide
-        // lands. Visible now so Stage 1 can confirm the popup + webcam feed.
+        // Visible on launch so the user can calibrate; the popup window then
+        // auto-hides itself when posture is good and re-shows when it drops.
         .visible(true)
         .build()?;
 

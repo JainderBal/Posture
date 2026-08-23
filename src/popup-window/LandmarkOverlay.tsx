@@ -133,14 +133,14 @@ export default function LandmarkOverlay({
 
   useEffect(() => {
     let landmarkers: Landmarkers | null = null;
-    let animationId = 0;
-    let lastDetectAt = 0;
+    let intervalId = 0;
     let latestFrame: FrameLandmarks | null = null;
     let smoothed: PostureLandmarks | null = null;
     let cancelled = false;
 
-    function renderLoop() {
-      animationId = requestAnimationFrame(renderLoop);
+    // A timer (not requestAnimationFrame) keeps detection alive while the popup
+    // is hidden — the browser throttles it to ~1s hidden, enough to catch a slouch.
+    function tick() {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       if (!video || !canvas || !landmarkers || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
@@ -148,18 +148,15 @@ export default function LandmarkOverlay({
       }
 
       const now = performance.now();
-      if (now - lastDetectAt >= DETECT_INTERVAL_MS) {
-        lastDetectAt = now;
-        latestFrame = detectFrame(landmarkers, video, now);
-        const raw = extractPostureLandmarks(latestFrame);
-        smoothed =
-          raw && smoothed
-            ? smoothLandmarks(smoothed, raw, LANDMARK_SMOOTHING_ALPHA, SHOULDER_SMOOTHING_ALPHA)
-            : raw;
-        landmarksRef.current = smoothed;
-        const baseline = baselineRef.current;
-        assessmentRef.current = smoothed && baseline ? assessPosture(smoothed, baseline) : null;
-      }
+      latestFrame = detectFrame(landmarkers, video, now);
+      const raw = extractPostureLandmarks(latestFrame);
+      smoothed =
+        raw && smoothed
+          ? smoothLandmarks(smoothed, raw, LANDMARK_SMOOTHING_ALPHA, SHOULDER_SMOOTHING_ALPHA)
+          : raw;
+      landmarksRef.current = smoothed;
+      const baseline = baselineRef.current;
+      assessmentRef.current = smoothed && baseline ? assessPosture(smoothed, baseline) : null;
 
       const assessment = assessmentRef.current;
       const faceColors = assessment?.head.pass ? GOOD_COLORS : BAD_COLORS;
@@ -173,14 +170,14 @@ export default function LandmarkOverlay({
         closeLandmarkers(landmarkers);
         return;
       }
-      renderLoop();
+      intervalId = window.setInterval(tick, DETECT_INTERVAL_MS);
     }
 
     start().catch((error) => console.error("MediaPipe initialization failed", error));
 
     return () => {
       cancelled = true;
-      cancelAnimationFrame(animationId);
+      window.clearInterval(intervalId);
       if (landmarkers) closeLandmarkers(landmarkers);
     };
   }, [videoRef, landmarksRef, baselineRef, assessmentRef]);
