@@ -70,6 +70,10 @@ CREATE TABLE posture_samples (
 
 Stored at `%APPDATA%/com.jainderbal.posturecoach/posture.db` on Windows. Booleans are `0/1` integers; the dashboard aggregates these rows into the streak/trend stats.
 
+**Why every 2 seconds is fine.** Each row is ~30–40 bytes, so a full 8-hour day of monitoring is only ~0.5 MB — negligible. Two seconds is coarse enough to avoid the waste of per-frame writes (~30×/s) while still fine enough to reconstruct trends and streaks.
+
+**The ~6-second gap rule.** Since rows are normally ~2s apart, a gap larger than 3× the sample interval (~6s) between two consecutive rows means monitoring wasn't running — the coach was closed or the app was off. The dashboard treats such a gap as a break: a good streak won't span it, and time you were away isn't counted as posture time. So an overnight gap never turns into one giant "good streak" (`MAX_SAMPLE_GAP_MS = SAMPLE_INTERVAL_MS * 3`).
+
 ---
 
 ## How the logic works
