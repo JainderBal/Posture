@@ -9,41 +9,6 @@ A small floating card appears in the corner **only when you slouch**, shows exac
 
 ---
 
-## Screenshots
-
-### The coach
-
-<table>
-  <tr>
-    <td width="50%">
-      <img src="docs/screenshots/01-calibrate.png" alt="Calibration screen">
-      <br><sub><b>Calibrate once.</b> Sit up straight and capture your personal baseline.</sub>
-    </td>
-    <td width="50%">
-      <img src="docs/screenshots/02-good-posture.png" alt="Good posture — all checks pass">
-      <br><sub><b>Good posture.</b> All three checks pass, the score holds at 100, and the card hides itself.</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-      <img src="docs/screenshots/03-bad-posture.png" alt="Slouch detected — a check turns red">
-      <br><sub><b>Slouch detected.</b> The failing check turns red with a single coaching line.</sub>
-    </td>
-    <td width="50%">
-      <img src="docs/screenshots/04-popup-corner.png" alt="Floating coach card in the screen corner">
-      <br><sub><b>Only when needed.</b> The card floats bottom-right, always on top, and disappears once you recover.</sub>
-    </td>
-  </tr>
-</table>
-
-### The dashboard
-
-![Posture history dashboard](docs/screenshots/05-dashboard.png)
-
-<sub>Good-posture time, average &amp; best streaks, slouch count, a score trend, and your most common issues — for Today or the last 7 days.</sub>
-
----
-
 ## What it does
 
 - **On-device pose detection** — a webcam feed runs through Google's MediaPipe (Pose + Face landmarkers) locally. No frames are uploaded anywhere.
